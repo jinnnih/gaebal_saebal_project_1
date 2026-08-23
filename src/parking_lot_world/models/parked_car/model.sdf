@@ -1,0 +1,73 @@
+<?xml version='1.0' ?>
+<!-- 정적 주차 차량 (4.40 x 1.80 x 1.45 m). 원점 = 차량 중심, +X = 앞머리 -->
+<sdf version='1.10'>
+  <model name='parked_car'>
+    <static>true</static>
+    <link name='link'>
+      <collision name='body_col'>
+        <pose>0 0 0.63 0 0 0</pose>
+        <geometry><box><size>4.4000 1.8000 0.7200</size></box></geometry>
+      </collision>
+      <visual name='body_vis'>
+        <pose>0 0 0.63 0 0 0</pose>
+        <geometry><box><size>4.4000 1.8000 0.7200</size></box></geometry>
+        <material>
+          <ambient>0.10 0.12 0.16 1</ambient>
+          <diffuse>0.30 0.36 0.46 1</diffuse>
+          <specular>0.1 0.1 0.1 1</specular>
+        </material>
+      </visual>
+
+      <collision name='cabin_col'>
+        <pose>-0.25 0 1.25 0 0 0</pose>
+        <geometry><box><size>2.2000 1.6560 0.5200</size></box></geometry>
+      </collision>
+      <visual name='cabin_vis'>
+        <pose>-0.25 0 1.25 0 0 0</pose>
+        <geometry><box><size>2.2000 1.6560 0.5200</size></box></geometry>
+        <material>
+          <ambient>0.06 0.08 0.10 1</ambient>
+          <diffuse>0.12 0.16 0.20 1</diffuse>
+          <specular>0.3 0.3 0.3 1</specular>
+        </material>
+      </visual>
+
+      <collision name='w_fl_col'>
+        <pose>1.408 0.756 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+      </collision>
+      <visual name='w_fl_vis'>
+        <pose>1.408 0.756 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material>
+      </visual>
+      <collision name='w_fr_col'>
+        <pose>1.408 -0.756 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+      </collision>
+      <visual name='w_fr_vis'>
+        <pose>1.408 -0.756 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material>
+      </visual>
+      <collision name='w_rl_col'>
+        <pose>-1.408 0.756 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+      </collision>
+      <visual name='w_rl_vis'>
+        <pose>-1.408 0.756 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material>
+      </visual>
+      <collision name='w_rr_col'>
+        <pose>-1.408 -0.756 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+      </collision>
+      <visual name='w_rr_vis'>
+        <pose>-1.408 -0.756 0.33 1.5708 0 0</pose>
+        <geometry><cylinder><radius>0.33</radius><length>0.22</length></cylinder></geometry>
+        <material><ambient>0.03 0.03 0.03 1</ambient><diffuse>0.08 0.08 0.08 1</diffuse></material>
+      </visual>
+    </link>
+  </model>
+</sdf>
