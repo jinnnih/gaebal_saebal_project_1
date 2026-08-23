@@ -1,0 +1,347 @@
+# 자동 생성 - tools/generate_parking_lot.py
+# Ackermann 차량형 로봇용 Nav2 파라미터 (ROS2 Jazzy / Nav2 1.3+)
+#   전역: Smac Planner Hybrid-A*  (후진 포함 motion primitive)
+#   지역: MPPI Controller         (AckermannConstraint)
+# 최소회전반경 3.570 m  = 축거 2.500 / tan(35 deg)
+
+amcl:
+  ros__parameters:
+    alpha1: 0.2
+    alpha2: 0.2
+    alpha3: 0.2
+    alpha4: 0.2
+    base_frame_id: "base_footprint"
+    global_frame_id: "map"
+    odom_frame_id: "odom"
+    scan_topic: "scan"
+    laser_max_range: 30.0
+    laser_min_range: 0.2
+    max_particles: 3000
+    min_particles: 800
+    robot_model_type: "nav2_amcl::DifferentialMotionModel"
+    update_min_a: 0.15
+    update_min_d: 0.20
+    resample_interval: 1
+    transform_tolerance: 1.0
+    set_initial_pose: true
+    initial_pose:
+      x: -23.000
+      y: -18.300
+      z: 0.0
+      yaw: 0.0000
+
+bt_navigator:
+  ros__parameters:
+    global_frame: map
+    robot_base_frame: base_link
+    odom_topic: /odom
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    navigators: ["navigate_to_pose", "navigate_through_poses"]
+    navigate_to_pose:
+      plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
+    navigate_through_poses:
+      plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator"
+    # 커스텀 BT 노드 (팀원 A 산출물)
+    plugin_lib_names:
+      - nav2_compute_path_to_pose_action_bt_node
+      - nav2_follow_path_action_bt_node
+      - nav2_spin_action_bt_node
+      - nav2_back_up_action_bt_node
+      - nav2_clear_costmap_service_bt_node
+      - nav2_rate_controller_bt_node
+      - nav2_recovery_node_bt_node
+      - nav2_pipeline_sequence_bt_node
+      - nav2_round_robin_node_bt_node
+      - valet_find_parking_spot_bt_node
+      - valet_park_maneuver_bt_node
+      - valet_unpark_maneuver_bt_node
+      - valet_report_status_bt_node
+
+controller_server:
+  ros__parameters:
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.02
+    min_theta_velocity_threshold: 0.02
+    failure_tolerance: 0.5
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["general_goal_checker", "parking_goal_checker"]
+    controller_plugins: ["FollowPath"]
+
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.30
+      movement_time_allowance: 20.0
+
+    # 통로 주행용 — 여유 있는 허용오차
+    general_goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.35
+      yaw_goal_tolerance: 0.20
+      stateful: true
+
+    # 주차 정차용 — 정밀 허용오차 (계획서 5주차 정량지표)
+    parking_goal_checker:
+      plugin: "nav2_controller::SimpleGoalChecker"
+      xy_goal_tolerance: 0.12
+      yaw_goal_tolerance: 0.06
+      stateful: true
+
+    FollowPath:
+      plugin: "nav2_mppi_controller::MPPIController"
+      time_steps: 60
+      model_dt: 0.05
+      batch_size: 2000
+      vx_std: 0.20
+      vy_std: 0.0
+      wz_std: 0.30
+      vx_max: 1.60
+      vx_min: -0.60          # 후진 허용 — 발렛파킹 핵심
+      vy_max: 0.0
+      wz_max: 0.448
+      iteration_count: 1
+      prune_distance: 6.0
+      transform_tolerance: 0.2
+      temperature: 0.3
+      gamma: 0.015
+      motion_model: "Ackermann"
+      AckermannConstraints:
+        min_turning_r: 3.570
+      visualize: true
+      TrajectoryVisualizer:
+        trajectory_step: 5
+        time_step: 3
+      critics: ["ConstraintCritic", "CostCritic", "GoalCritic",
+                "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic",
+                "PathAngleCritic", "PreferForwardCritic"]
+      ConstraintCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 4.0
+      GoalCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 1.4
+      GoalAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.0
+        threshold_to_consider: 0.5
+      PreferForwardCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0        # 통로에서는 전진 선호. 주차 시엔 낮춘 프로파일 사용
+        threshold_to_consider: 0.5
+      CostCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.81
+        critical_cost: 300.0
+        consider_footprint: true
+        collision_cost: 1000000.0
+        near_goal_distance: 1.0
+      PathAlignCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 14.0
+        max_path_occupancy_ratio: 0.05
+        trajectory_point_step: 4
+        threshold_to_consider: 0.5
+        offset_from_furthest: 20
+        use_path_orientations: true
+      PathFollowCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        offset_from_furthest: 5
+        threshold_to_consider: 1.4
+      PathAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 2.0
+        offset_from_furthest: 4
+        threshold_to_consider: 0.5
+        max_angle_to_furthest: 1.0
+        mode: 2                 # 2 = 전/후진 모두 허용
+
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 5.0
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_smac_planner::SmacPlannerHybrid"
+      tolerance: 0.30
+      downsample_costmap: false
+      downsampling_factor: 1
+      allow_unknown: false
+      max_iterations: 1200000
+      max_on_approach_iterations: 1200
+      max_planning_time: 5.0
+      motion_model_for_search: "REEDS_SHEPP"   # 전진+후진 (DUBIN은 전진만)
+      angle_quantization_bins: 72
+      analytic_expansion_ratio: 3.5
+      analytic_expansion_max_length: 3.0
+      minimum_turning_radius: 3.570
+      reverse_penalty: 2.1        # 낮출수록 후진 적극 사용 (주차 프로파일 1.3)
+      change_penalty: 0.15
+      non_straight_penalty: 1.20
+      cost_penalty: 2.0
+      retrospective_penalty: 0.015
+      lookup_table_size: 20.0
+      cache_obstacle_heuristic: true
+      smooth_path: true
+      smoother:
+        max_iterations: 1000
+        w_smooth: 0.3
+        w_data: 0.2
+        tolerance: 1.0e-10
+        do_refinement: true
+        refinement_num: 2
+
+smoother_server:
+  ros__parameters:
+    smoother_plugins: ["simple_smoother"]
+    simple_smoother:
+      plugin: "nav2_smoother::SimpleSmoother"
+      tolerance: 1.0e-10
+      max_its: 1000
+      do_refinement: true
+
+behavior_server:
+  ros__parameters:
+    local_frame: odom
+    global_frame: map
+    robot_base_frame: base_link
+    cycle_frequency: 10.0
+    behavior_plugins: ["backup", "drive_on_heading", "wait", "assisted_teleop"]
+    backup:
+      plugin: "nav2_behaviors::BackUp"
+    drive_on_heading:
+      plugin: "nav2_behaviors::DriveOnHeading"
+    wait:
+      plugin: "nav2_behaviors::Wait"
+    assisted_teleop:
+      plugin: "nav2_behaviors::AssistedTeleop"
+    # Ackermann 은 제자리 회전 불가 -> Spin 복구행동 사용 금지
+    simulate_ahead_time: 2.0
+
+velocity_smoother:
+  ros__parameters:
+    smoothing_frequency: 20.0
+    scale_velocities: false
+    feedback: "OPEN_LOOP"
+    max_velocity: [1.60, 0.0, 0.448]
+    min_velocity: [-0.60, 0.0, -0.448]
+    max_accel: [1.2, 0.0, 2.0]
+    max_decel: [-1.6, 0.0, -2.0]
+    odom_topic: "odom"
+    odom_duration: 0.1
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: base_link
+      resolution: 0.050
+      track_unknown_space: true
+      # 직사각 풋프린트 — 차량형이므로 원형 근사 금지
+      footprint: "[ [2.300, 1.000], [2.300, -1.000], [-2.300, -1.000], [-2.300, 1.000] ]"
+      footprint_padding: 0.03
+      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      filters: ["keepout_filter", "speed_filter"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: true
+          marking: true
+          data_type: "LaserScan"
+          raytrace_max_range: 30.0
+          obstacle_max_range: 25.0
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 2.5
+        inflation_radius: 0.85
+      # 아래 두 필터는 filter 서버가 떠 있어야 동작한다.
+      #   ros2 launch parking_lot_world nav2_valet.launch.py use_costmap_filters:=true
+      # keepout: 주차면 내부를 진입금지로 만들어 통로 주행 중 가로지르기를 막는다.
+      #          ParkManeuver 진입 직전에 런타임으로 꺼야 주차가 가능하다.
+      #   ros2 param set /global_costmap/global_costmap keepout_filter.enabled false
+      keepout_filter:
+        plugin: "nav2_costmap_2d::KeepoutFilter"
+        enabled: false
+        filter_info_topic: "/costmap_filter_info"
+      speed_filter:
+        plugin: "nav2_costmap_2d::SpeedFilter"
+        enabled: false
+        filter_info_topic: "/speed_filter_info"
+        speed_limit_topic: "/speed_limit"
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      update_frequency: 10.0
+      publish_frequency: 5.0
+      global_frame: odom
+      robot_base_frame: base_link
+      rolling_window: true
+      width: 16
+      height: 16
+      resolution: 0.050
+      footprint: "[ [2.300, 1.000], [2.300, -1.000], [-2.300, -1.000], [-2.300, 1.000] ]"
+      footprint_padding: 0.03
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: true
+          marking: true
+          data_type: "LaserScan"
+          raytrace_max_range: 20.0
+          obstacle_max_range: 16.0
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.55
+
+map_server:
+  ros__parameters:
+    yaml_filename: "parking_lot.yaml"
+
+collision_monitor:
+  ros__parameters:
+    base_frame_id: "base_footprint"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "cmd_vel_smoothed"
+    cmd_vel_out_topic: "cmd_vel"
+    transform_tolerance: 0.2
+    source_timeout: 1.0
+    stop_pub_timeout: 2.0
+    polygons: ["FootprintApproach"]
+    FootprintApproach:
+      type: "polygon"
+      action_type: "approach"
+      footprint_topic: "/local_costmap/published_footprint"
+      time_before_collision: 1.5
+      simulation_time_step: 0.05
+      min_points: 6
+      visualize: false
+      enabled: true
+    observation_sources: ["scan"]
+    scan:
+      type: "scan"
+      topic: "/scan"
+      enabled: true

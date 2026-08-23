@@ -1,0 +1,503 @@
+# 자동 생성 - tools/generate_parking_lot.py
+# 주차면 관리 노드(parking_spot_manager) ROS2 파라미터
+#   goal_pose    : [x, y, yaw] 후진 주차 최종 포즈 (앞머리가 통로를 향함)
+#   prepark_pose : [x, y, yaw] 후진 시작 대기 포즈 (통로 위, 주차면을 등짐)
+#   aisle_point  : [x, y]      통로 중심선 경유점
+parking_spot_manager:
+  ros__parameters:
+    frame_id: "map"
+    lot_name: "B1_parking_lot"
+    scale: 1.000
+    stall_size: [2.500, 5.400]
+    reverse_distance: 5.000
+    entry_pose: [-23.000, -18.300, 0.0000]
+    exit_pose: [23.500, 18.300, 0.0000]
+    queue_pose: [-21.500, -15.300, 1.5708]
+    spot_ids: ["A01", "A03", "A05", "A06", "A07", "A08", "A09", "A10", "A11", "A12", "A13", "A14", "B01", "B02", "B03", "B04", "B05", "B06", "B07", "B08", "B09", "B10", "B11", "B12", "B13", "B14", "C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12", "C13", "C14", "D01", "D02", "D03", "D04", "D05", "D06", "D07", "D08", "D09", "D10", "D11", "D12", "D13", "D14"]
+    spots:
+      A01:
+        row: "A"
+        type: "accessible"
+        entry_side: "S"
+        center: [-16.250, -12.100]
+        goal_pose: [-16.250, -12.100, -1.5708]
+        prepark_pose: [-16.250, -17.100, -1.5708]
+        aisle_point: [-16.250, -18.300]
+        initially_occupied: false
+      A03:
+        row: "A"
+        type: "accessible"
+        entry_side: "S"
+        center: [-11.250, -12.100]
+        goal_pose: [-11.250, -12.100, -1.5708]
+        prepark_pose: [-11.250, -17.100, -1.5708]
+        aisle_point: [-11.250, -18.300]
+        initially_occupied: false
+      A05:
+        row: "A"
+        type: "standard"
+        entry_side: "S"
+        center: [-6.250, -12.100]
+        goal_pose: [-6.250, -12.100, -1.5708]
+        prepark_pose: [-6.250, -17.100, -1.5708]
+        aisle_point: [-6.250, -18.300]
+        initially_occupied: true
+      A06:
+        row: "A"
+        type: "standard"
+        entry_side: "S"
+        center: [-3.750, -12.100]
+        goal_pose: [-3.750, -12.100, -1.5708]
+        prepark_pose: [-3.750, -17.100, -1.5708]
+        aisle_point: [-3.750, -18.300]
+        initially_occupied: true
+      A07:
+        row: "A"
+        type: "standard"
+        entry_side: "S"
+        center: [-1.250, -12.100]
+        goal_pose: [-1.250, -12.100, -1.5708]
+        prepark_pose: [-1.250, -17.100, -1.5708]
+        aisle_point: [-1.250, -18.300]
+        initially_occupied: false
+      A08:
+        row: "A"
+        type: "standard"
+        entry_side: "S"
+        center: [1.250, -12.100]
+        goal_pose: [1.250, -12.100, -1.5708]
+        prepark_pose: [1.250, -17.100, -1.5708]
+        aisle_point: [1.250, -18.300]
+        initially_occupied: false
+      A09:
+        row: "A"
+        type: "standard"
+        entry_side: "S"
+        center: [3.750, -12.100]
+        goal_pose: [3.750, -12.100, -1.5708]
+        prepark_pose: [3.750, -17.100, -1.5708]
+        aisle_point: [3.750, -18.300]
+        initially_occupied: true
+      A10:
+        row: "A"
+        type: "standard"
+        entry_side: "S"
+        center: [6.250, -12.100]
+        goal_pose: [6.250, -12.100, -1.5708]
+        prepark_pose: [6.250, -17.100, -1.5708]
+        aisle_point: [6.250, -18.300]
+        initially_occupied: false
+      A11:
+        row: "A"
+        type: "standard"
+        entry_side: "S"
+        center: [8.750, -12.100]
+        goal_pose: [8.750, -12.100, -1.5708]
+        prepark_pose: [8.750, -17.100, -1.5708]
+        aisle_point: [8.750, -18.300]
+        initially_occupied: false
+      A12:
+        row: "A"
+        type: "standard"
+        entry_side: "S"
+        center: [11.250, -12.100]
+        goal_pose: [11.250, -12.100, -1.5708]
+        prepark_pose: [11.250, -17.100, -1.5708]
+        aisle_point: [11.250, -18.300]
+        initially_occupied: true
+      A13:
+        row: "A"
+        type: "standard"
+        entry_side: "S"
+        center: [13.750, -12.100]
+        goal_pose: [13.750, -12.100, -1.5708]
+        prepark_pose: [13.750, -17.100, -1.5708]
+        aisle_point: [13.750, -18.300]
+        initially_occupied: false
+      A14:
+        row: "A"
+        type: "standard"
+        entry_side: "S"
+        center: [16.250, -12.100]
+        goal_pose: [16.250, -12.100, -1.5708]
+        prepark_pose: [16.250, -17.100, -1.5708]
+        aisle_point: [16.250, -18.300]
+        initially_occupied: true
+      B01:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [-16.250, -6.700]
+        goal_pose: [-16.250, -6.700, 1.5708]
+        prepark_pose: [-16.250, -1.700, 1.5708]
+        aisle_point: [-16.250, 0.000]
+        initially_occupied: false
+      B02:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [-13.750, -6.700]
+        goal_pose: [-13.750, -6.700, 1.5708]
+        prepark_pose: [-13.750, -1.700, 1.5708]
+        aisle_point: [-13.750, 0.000]
+        initially_occupied: true
+      B03:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [-11.250, -6.700]
+        goal_pose: [-11.250, -6.700, 1.5708]
+        prepark_pose: [-11.250, -1.700, 1.5708]
+        aisle_point: [-11.250, 0.000]
+        initially_occupied: true
+      B04:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [-8.750, -6.700]
+        goal_pose: [-8.750, -6.700, 1.5708]
+        prepark_pose: [-8.750, -1.700, 1.5708]
+        aisle_point: [-8.750, 0.000]
+        initially_occupied: false
+      B05:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [-6.250, -6.700]
+        goal_pose: [-6.250, -6.700, 1.5708]
+        prepark_pose: [-6.250, -1.700, 1.5708]
+        aisle_point: [-6.250, 0.000]
+        initially_occupied: false
+      B06:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [-3.750, -6.700]
+        goal_pose: [-3.750, -6.700, 1.5708]
+        prepark_pose: [-3.750, -1.700, 1.5708]
+        aisle_point: [-3.750, 0.000]
+        initially_occupied: false
+      B07:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [-1.250, -6.700]
+        goal_pose: [-1.250, -6.700, 1.5708]
+        prepark_pose: [-1.250, -1.700, 1.5708]
+        aisle_point: [-1.250, 0.000]
+        initially_occupied: true
+      B08:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [1.250, -6.700]
+        goal_pose: [1.250, -6.700, 1.5708]
+        prepark_pose: [1.250, -1.700, 1.5708]
+        aisle_point: [1.250, 0.000]
+        initially_occupied: true
+      B09:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [3.750, -6.700]
+        goal_pose: [3.750, -6.700, 1.5708]
+        prepark_pose: [3.750, -1.700, 1.5708]
+        aisle_point: [3.750, 0.000]
+        initially_occupied: false
+      B10:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [6.250, -6.700]
+        goal_pose: [6.250, -6.700, 1.5708]
+        prepark_pose: [6.250, -1.700, 1.5708]
+        aisle_point: [6.250, 0.000]
+        initially_occupied: false
+      B11:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [8.750, -6.700]
+        goal_pose: [8.750, -6.700, 1.5708]
+        prepark_pose: [8.750, -1.700, 1.5708]
+        aisle_point: [8.750, 0.000]
+        initially_occupied: true
+      B12:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [11.250, -6.700]
+        goal_pose: [11.250, -6.700, 1.5708]
+        prepark_pose: [11.250, -1.700, 1.5708]
+        aisle_point: [11.250, 0.000]
+        initially_occupied: false
+      B13:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [13.750, -6.700]
+        goal_pose: [13.750, -6.700, 1.5708]
+        prepark_pose: [13.750, -1.700, 1.5708]
+        aisle_point: [13.750, 0.000]
+        initially_occupied: false
+      B14:
+        row: "B"
+        type: "standard"
+        entry_side: "N"
+        center: [16.250, -6.700]
+        goal_pose: [16.250, -6.700, 1.5708]
+        prepark_pose: [16.250, -1.700, 1.5708]
+        aisle_point: [16.250, 0.000]
+        initially_occupied: true
+      C01:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [-16.250, 6.700]
+        goal_pose: [-16.250, 6.700, -1.5708]
+        prepark_pose: [-16.250, 1.700, -1.5708]
+        aisle_point: [-16.250, 0.000]
+        initially_occupied: true
+      C02:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [-13.750, 6.700]
+        goal_pose: [-13.750, 6.700, -1.5708]
+        prepark_pose: [-13.750, 1.700, -1.5708]
+        aisle_point: [-13.750, 0.000]
+        initially_occupied: false
+      C03:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [-11.250, 6.700]
+        goal_pose: [-11.250, 6.700, -1.5708]
+        prepark_pose: [-11.250, 1.700, -1.5708]
+        aisle_point: [-11.250, 0.000]
+        initially_occupied: false
+      C04:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [-8.750, 6.700]
+        goal_pose: [-8.750, 6.700, -1.5708]
+        prepark_pose: [-8.750, 1.700, -1.5708]
+        aisle_point: [-8.750, 0.000]
+        initially_occupied: true
+      C05:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [-6.250, 6.700]
+        goal_pose: [-6.250, 6.700, -1.5708]
+        prepark_pose: [-6.250, 1.700, -1.5708]
+        aisle_point: [-6.250, 0.000]
+        initially_occupied: true
+      C06:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [-3.750, 6.700]
+        goal_pose: [-3.750, 6.700, -1.5708]
+        prepark_pose: [-3.750, 1.700, -1.5708]
+        aisle_point: [-3.750, 0.000]
+        initially_occupied: false
+      C07:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [-1.250, 6.700]
+        goal_pose: [-1.250, 6.700, -1.5708]
+        prepark_pose: [-1.250, 1.700, -1.5708]
+        aisle_point: [-1.250, 0.000]
+        initially_occupied: false
+      C08:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [1.250, 6.700]
+        goal_pose: [1.250, 6.700, -1.5708]
+        prepark_pose: [1.250, 1.700, -1.5708]
+        aisle_point: [1.250, 0.000]
+        initially_occupied: false
+      C09:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [3.750, 6.700]
+        goal_pose: [3.750, 6.700, -1.5708]
+        prepark_pose: [3.750, 1.700, -1.5708]
+        aisle_point: [3.750, 0.000]
+        initially_occupied: true
+      C10:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [6.250, 6.700]
+        goal_pose: [6.250, 6.700, -1.5708]
+        prepark_pose: [6.250, 1.700, -1.5708]
+        aisle_point: [6.250, 0.000]
+        initially_occupied: true
+      C11:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [8.750, 6.700]
+        goal_pose: [8.750, 6.700, -1.5708]
+        prepark_pose: [8.750, 1.700, -1.5708]
+        aisle_point: [8.750, 0.000]
+        initially_occupied: false
+      C12:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [11.250, 6.700]
+        goal_pose: [11.250, 6.700, -1.5708]
+        prepark_pose: [11.250, 1.700, -1.5708]
+        aisle_point: [11.250, 0.000]
+        initially_occupied: false
+      C13:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [13.750, 6.700]
+        goal_pose: [13.750, 6.700, -1.5708]
+        prepark_pose: [13.750, 1.700, -1.5708]
+        aisle_point: [13.750, 0.000]
+        initially_occupied: true
+      C14:
+        row: "C"
+        type: "standard"
+        entry_side: "S"
+        center: [16.250, 6.700]
+        goal_pose: [16.250, 6.700, -1.5708]
+        prepark_pose: [16.250, 1.700, -1.5708]
+        aisle_point: [16.250, 0.000]
+        initially_occupied: false
+      D01:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [-16.250, 12.100]
+        goal_pose: [-16.250, 12.100, 1.5708]
+        prepark_pose: [-16.250, 17.100, 1.5708]
+        aisle_point: [-16.250, 18.300]
+        initially_occupied: false
+      D02:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [-13.750, 12.100]
+        goal_pose: [-13.750, 12.100, 1.5708]
+        prepark_pose: [-13.750, 17.100, 1.5708]
+        aisle_point: [-13.750, 18.300]
+        initially_occupied: true
+      D03:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [-11.250, 12.100]
+        goal_pose: [-11.250, 12.100, 1.5708]
+        prepark_pose: [-11.250, 17.100, 1.5708]
+        aisle_point: [-11.250, 18.300]
+        initially_occupied: true
+      D04:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [-8.750, 12.100]
+        goal_pose: [-8.750, 12.100, 1.5708]
+        prepark_pose: [-8.750, 17.100, 1.5708]
+        aisle_point: [-8.750, 18.300]
+        initially_occupied: false
+      D05:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [-6.250, 12.100]
+        goal_pose: [-6.250, 12.100, 1.5708]
+        prepark_pose: [-6.250, 17.100, 1.5708]
+        aisle_point: [-6.250, 18.300]
+        initially_occupied: false
+      D06:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [-3.750, 12.100]
+        goal_pose: [-3.750, 12.100, 1.5708]
+        prepark_pose: [-3.750, 17.100, 1.5708]
+        aisle_point: [-3.750, 18.300]
+        initially_occupied: true
+      D07:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [-1.250, 12.100]
+        goal_pose: [-1.250, 12.100, 1.5708]
+        prepark_pose: [-1.250, 17.100, 1.5708]
+        aisle_point: [-1.250, 18.300]
+        initially_occupied: true
+      D08:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [1.250, 12.100]
+        goal_pose: [1.250, 12.100, 1.5708]
+        prepark_pose: [1.250, 17.100, 1.5708]
+        aisle_point: [1.250, 18.300]
+        initially_occupied: false
+      D09:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [3.750, 12.100]
+        goal_pose: [3.750, 12.100, 1.5708]
+        prepark_pose: [3.750, 17.100, 1.5708]
+        aisle_point: [3.750, 18.300]
+        initially_occupied: false
+      D10:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [6.250, 12.100]
+        goal_pose: [6.250, 12.100, 1.5708]
+        prepark_pose: [6.250, 17.100, 1.5708]
+        aisle_point: [6.250, 18.300]
+        initially_occupied: false
+      D11:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [8.750, 12.100]
+        goal_pose: [8.750, 12.100, 1.5708]
+        prepark_pose: [8.750, 17.100, 1.5708]
+        aisle_point: [8.750, 18.300]
+        initially_occupied: true
+      D12:
+        row: "D"
+        type: "standard"
+        entry_side: "N"
+        center: [11.250, 12.100]
+        goal_pose: [11.250, 12.100, 1.5708]
+        prepark_pose: [11.250, 17.100, 1.5708]
+        aisle_point: [11.250, 18.300]
+        initially_occupied: false
+      D13:
+        row: "D"
+        type: "ev"
+        entry_side: "N"
+        center: [13.750, 12.100]
+        goal_pose: [13.750, 12.100, 1.5708]
+        prepark_pose: [13.750, 17.100, 1.5708]
+        aisle_point: [13.750, 18.300]
+        initially_occupied: false
+      D14:
+        row: "D"
+        type: "ev"
+        entry_side: "N"
+        center: [16.250, 12.100]
+        goal_pose: [16.250, 12.100, 1.5708]
+        prepark_pose: [16.250, 17.100, 1.5708]
+        aisle_point: [16.250, 18.300]
+        initially_occupied: false

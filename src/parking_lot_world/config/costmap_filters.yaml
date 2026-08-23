@@ -1,0 +1,34 @@
+# 자동 생성 - tools/generate_parking_lot.py
+# Nav2 Costmap Filters — keepout(진입금지) / speed(감속) 마스크 서버
+
+# 1) 주차면 내부 진입 금지 마스크
+#    통로 주행 중 플래너가 주차면을 가로지르지 않게 한다.
+#    ParkManeuver 진입 시에는 keepout_filter.enabled=false 로 런타임 해제.
+filter_mask_server:
+  ros__parameters:
+    frame_id: "map"
+    topic_name: "/keepout_filter_mask"
+    yaml_filename: "keepout_mask.yaml"
+
+costmap_filter_info_server:
+  ros__parameters:
+    type: 0                       # 0 = keepout
+    filter_info_topic: "/costmap_filter_info"
+    mask_topic: "/keepout_filter_mask"
+    base: 0.0
+    multiplier: 1.0
+
+# 2) 감속 마스크 (주차면 앞 / 게이트 / 코너)
+speed_mask_server:
+  ros__parameters:
+    frame_id: "map"
+    topic_name: "/speed_filter_mask"
+    yaml_filename: "speed_mask.yaml"
+
+speed_filter_info_server:
+  ros__parameters:
+    type: 1                       # 1 = speed limit (percent)
+    filter_info_topic: "/speed_filter_info"
+    mask_topic: "/speed_filter_mask"
+    base: 0.0
+    multiplier: 1.0
