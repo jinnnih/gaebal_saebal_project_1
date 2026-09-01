@@ -1,0 +1,105 @@
+<?xml version="1.0"?>
+<!-- ==========================================================================
+     valet_car 공통 정의 — 치수 상수 / 관성 매크로 / 재질
+     치수 근거: parking_lot_world/README.md "4. 로봇 스펙 전제"
+     ========================================================================== -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ===== 1. 차량 기구학 (맵 패키지와 반드시 일치) ===================== -->
+  <xacro:property name="body_length"  value="4.50"/>   <!-- 전장 -->
+  <xacro:property name="body_width"   value="1.90"/>   <!-- 전폭 -->
+  <xacro:property name="wheelbase"    value="2.50"/>   <!-- 축거 -->
+  <xacro:property name="wheel_radius" value="0.33"/>
+  <xacro:property name="wheel_width"  value="0.22"/>
+  <!-- max_steer 는 "자전거 모델"(가상 중앙륜)의 최대 조향각이다.
+       최소회전반경을 정의하는 값이고 Nav2 / twist_to_ackermann 이 쓰는 값. -->
+  <xacro:property name="max_steer"    value="0.6108652"/> <!-- 35 deg -->
+  <xacro:property name="track"        value="1.38"/>
+
+  <!-- 최소회전반경(후륜축 중심) = wheelbase / tan(max_steer) = 3.5704 m
+       nav2_ackermann.yaml 의 minimum_turning_radius / min_turning_r 과 동일해야 한다. -->
+  <xacro:property name="min_turn_radius" value="${wheelbase/tan(max_steer)}"/>
+
+  <!-- ! 조인트 리밋은 max_steer 가 아니다.
+       Ackermann 에서 안쪽 바퀴는 자전거 모델보다 더 꺾여야 한다.
+         delta_inner = atan(L / (R - track/2)) = atan(2.5/2.8804) = 40.66 deg
+       리밋을 35 도로 잡으면 안쪽 바퀴가 포화되어 최소회전반경이 안 나온다.
+       (실측: 좌 29.9 / 우 35.0(포화) -> 실제 회전반경이 커짐)
+       실측에서 2% 여유(41.78도)로는 내륜이 리밋에 붙어 포화됐다
+       (좌 32.14 / 우 41.77 -> 실측 회전반경 4.03 m). 5% 여유로 올린다.
+       이때 최대조향 시 앞바퀴 바깥끝은 0.996 m 로 Nav2 풋프린트 반폭
+       1.00 m 안쪽이다. -->
+  <xacro:property name="steer_limit"
+                  value="${1.05*atan(wheelbase/(min_turn_radius - track/2))}"/>
+
+  <!-- ===== 2. 차체 형상 ================================================ -->
+  <!-- base_link 는 "차체 중심"(앞뒤 오버행 각 1.00 m). 후륜축이 아니다.
+       근거: nav2_ackermann.yaml footprint 가 [+-2.30, +-1.00] 대칭이고
+             parking_spots.yaml 의 goal_pose 가 주차면 중심이기 때문. -->
+  <xacro:property name="base_z"       value="${wheel_radius}"/>  <!-- 지면->base_link -->
+
+  <!-- 하부 섀시: 바퀴(안쪽끝 y=0.59)와 간섭하지 않도록 폭 1.10 -->
+  <xacro:property name="chassis_len"  value="4.20"/>
+  <xacro:property name="chassis_w"    value="1.10"/>
+  <xacro:property name="chassis_h"    value="0.42"/>
+  <xacro:property name="chassis_cz"   value="0.12"/>   <!-- base_link 기준, 절대 0.45 -->
+
+  <!-- 상부 데크: 전장/전폭을 담당. 바퀴 상단(절대 0.66)보다 0.02 위에서 시작 -->
+  <xacro:property name="deck_len"     value="${body_length}"/>
+  <xacro:property name="deck_w"       value="${body_width}"/>
+  <xacro:property name="deck_h"       value="0.14"/>
+  <xacro:property name="deck_cz"      value="0.42"/>   <!-- 절대 0.75, 상단 0.82 -->
+
+  <!-- ===== 3. 센서 장착 높이 (주차장 월드 기하로부터 역산) ==============
+       parked_car 차체 박스 : z 0.27 ~ 0.99  (폭 1.80)
+       parked_car 캐빈      : z 0.99 ~ 1.51  (폭 1.66)
+       벽/기둥 2.60 · EV충전기 1.30 · 게이트 1.20 · 라바콘 0.59
+
+       라이다를 지붕(1.6 m)에 올리면 주차 차량 위를 넘어가 obstacle_layer 가
+       주차 차량을 못 본다. 반대로 자차 데크(0.82) 보다는 위여야 자기 몸에 가린다.
+       -> 절대 0.92 m. 주차 차량 "차체"를 때리고 자차 데크는 넘어간다.
+       라바콘(0.59)은 못 보지만 정적 맵(parking_lot.pgm)에 이미 들어있다. -->
+  <xacro:property name="lidar_z"      value="0.59"/>   <!-- 절대 0.92 -->
+  <xacro:property name="mast_cz"      value="0.52"/>   <!-- 절대 0.85 -->
+  <xacro:property name="imu_z"        value="0.05"/>
+
+  <!-- ===== 4. 질량 ===================================================== -->
+  <xacro:property name="base_mass"    value="800.0"/>
+  <xacro:property name="wheel_mass"   value="25.0"/>
+  <xacro:property name="knuckle_mass" value="6.0"/>
+
+  <!-- ===== 5. 속도 제약 (nav2_ackermann.yaml 과 동일) ================== -->
+  <xacro:property name="max_speed_fwd" value="1.60"/>
+  <xacro:property name="max_speed_rev" value="0.60"/>
+
+  <!-- ===== 6. 관성 매크로 ============================================== -->
+  <xacro:macro name="box_inertia" params="m x y z *origin">
+    <inertial>
+      <xacro:insert_block name="origin"/>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(y*y+z*z)/12.0}" ixy="0.0" ixz="0.0"
+               iyy="${m*(x*x+z*z)/12.0}" iyz="0.0"
+               izz="${m*(x*x+y*y)/12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- 회전축이 y 인 원통(바퀴) -->
+  <xacro:macro name="wheel_inertia" params="m r h">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="${m}"/>
+      <inertia ixx="${m*(3.0*r*r+h*h)/12.0}" ixy="0.0" ixz="0.0"
+               iyy="${m*r*r/2.0}"            iyz="0.0"
+               izz="${m*(3.0*r*r+h*h)/12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- ===== 7. 재질 ===================================================== -->
+  <material name="valet_deck">   <color rgba="0.93 0.45 0.10 1.0"/></material>
+  <material name="valet_body">   <color rgba="0.20 0.22 0.26 1.0"/></material>
+  <material name="valet_rubber"> <color rgba="0.07 0.07 0.08 1.0"/></material>
+  <material name="valet_metal">  <color rgba="0.55 0.57 0.60 1.0"/></material>
+  <material name="valet_sensor"> <color rgba="0.10 0.60 0.85 1.0"/></material>
+  <material name="valet_front">  <color rgba="0.95 0.90 0.30 1.0"/></material>
+
+</robot>

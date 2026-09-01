@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<!-- ==========================================================================
+     ros2_control 하드웨어 인터페이스 + gz_ros2_control 플러그인
+
+     ackermann_steering_controller 요구사항
+       조향 조인트(front_*_steer_joint) : position 명령 + position 상태
+       구동 조인트(rear_*_wheel_joint)  : velocity 명령 + velocity 상태
+     앞바퀴 회전축은 비구동이라 상태만 노출한다(joint_state_broadcaster -> TF 시각화).
+     ========================================================================== -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- ==== 조향 (앞) ==== -->
+  <xacro:macro name="steer_iface" params="side">
+    <joint name="front_${side}_steer_joint">
+      <command_interface name="position">
+        <param name="min">${-steer_limit}</param>
+        <param name="max">${steer_limit}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ==== 구동 (뒤) ====  1.60 m/s / 0.33 m = 4.85 rad/s. 여유를 둬 +-20 rad/s. -->
+  <xacro:macro name="drive_iface" params="side">
+    <joint name="rear_${side}_wheel_joint">
+      <command_interface name="velocity">
+        <param name="min">-20.0</param>
+        <param name="max">20.0</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ==== 앞바퀴 회전 (비구동, 상태만) ==== -->
+  <xacro:macro name="free_iface" params="side">
+    <joint name="front_${side}_wheel_joint">
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="valet_ros2_control" params="controllers_file">
+
+    <ros2_control name="ValetCarSystem" type="system">
+      <hardware>
+        <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+      </hardware>
+
+      <xacro:steer_iface side="left"/>
+      <xacro:steer_iface side="right"/>
+      <xacro:drive_iface side="left"/>
+      <xacro:drive_iface side="right"/>
+      <xacro:free_iface  side="left"/>
+      <xacro:free_iface  side="right"/>
+    </ros2_control>
+
+    <gazebo>
+      <plugin filename="gz_ros2_control-system"
+              name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+        <parameters>${controllers_file}</parameters>
+        <!-- position 명령은 gz_ros2_control 이 P 제어(위치오차 -> 속도명령)로 푼다.
+             기본 게인은 조향에 쓰기엔 너무 물러서 올려 잡는다. -->
+        <position_proportional_gain>12.0</position_proportional_gain>
+      </plugin>
+    </gazebo>
+
+  </xacro:macro>
+</robot>

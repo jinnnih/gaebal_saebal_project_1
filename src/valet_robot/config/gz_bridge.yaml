@@ -1,0 +1,32 @@
+# ===========================================================================
+# ros_gz_bridge 설정 — Gazebo Harmonic <-> ROS 2
+#   /clock 은 parking_lot_world/launch/parking_world.launch.py 가 이미 브리지한다.
+# ===========================================================================
+
+# 2D 라이다 : AMCL(scan_topic: scan) / costmap obstacle_layer(/scan)
+- ros_topic_name: "/scan"
+  gz_topic_name: "/scan"
+  ros_type_name: "sensor_msgs/msg/LaserScan"
+  gz_type_name: "gz.msgs.LaserScan"
+  direction: GZ_TO_ROS
+
+# IMU (선택 — robot_localization 확장 시 사용)
+- ros_topic_name: "/imu"
+  gz_topic_name: "/imu"
+  ros_type_name: "sensor_msgs/msg/Imu"
+  gz_type_name: "gz.msgs.IMU"
+  direction: GZ_TO_ROS
+
+# 오도메트리 토픽 : Nav2 bt_navigator/velocity_smoother 의 odom_topic
+- ros_topic_name: "/odom"
+  gz_topic_name: "/odom"
+  ros_type_name: "nav_msgs/msg/Odometry"
+  gz_type_name: "gz.msgs.Odometry"
+  direction: GZ_TO_ROS
+
+# odom -> base_footprint TF
+- ros_topic_name: "/tf"
+  gz_topic_name: "/tf_gz"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  gz_type_name: "gz.msgs.Pose_V"
+  direction: GZ_TO_ROS

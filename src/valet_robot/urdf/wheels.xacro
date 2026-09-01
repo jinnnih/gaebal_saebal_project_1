@@ -1,0 +1,84 @@
+<?xml version="1.0"?>
+<!-- ==========================================================================
+     바퀴 매크로
+       front_corner : 조향 너클(revolute, z축) + 자유회전 바퀴(continuous, y축)
+       rear_corner  : 구동 바퀴(continuous, y축)
+     좌표 기준은 base_link (차체 중심, 지면 위 wheel_radius).
+     ========================================================================== -->
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- 바퀴 링크 공통부 -->
+  <xacro:macro name="wheel_link" params="name">
+    <link name="${name}">
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="valet_rubber"/>
+      </visual>
+      <!-- 휠 디스크 (방향 식별용, 충돌 없음) -->
+      <visual>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius*0.55}" length="${wheel_width*1.06}"/></geometry>
+        <material name="valet_metal"/>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
+        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+      </collision>
+      <xacro:wheel_inertia m="${wheel_mass}" r="${wheel_radius}" h="${wheel_width}"/>
+    </link>
+  </xacro:macro>
+
+  <!-- ================ 앞바퀴(조향) ================ -->
+  <!-- side: left|right,  reflect: +1(left) / -1(right) -->
+  <xacro:macro name="front_corner" params="side reflect">
+
+    <!-- 조향 너클: 충돌 형상 없음(데크/섀시와의 자기충돌 회피) -->
+    <link name="front_${side}_steer_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.14 0.10 0.26"/></geometry>
+        <material name="valet_metal"/>
+      </visual>
+      <xacro:box_inertia m="${knuckle_mass}" x="0.14" y="0.10" z="0.26">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:box_inertia>
+    </link>
+
+    <joint name="front_${side}_steer_joint" type="revolute">
+      <parent link="base_link"/>
+      <child  link="front_${side}_steer_link"/>
+      <origin xyz="${wheelbase/2.0} ${reflect*track/2.0} 0" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="${-steer_limit}" upper="${steer_limit}" effort="6000.0" velocity="3.0"/>
+      <dynamics damping="2.0" friction="1.0"/>
+    </joint>
+
+    <xacro:wheel_link name="front_${side}_wheel_link"/>
+
+    <!-- 앞바퀴는 비구동(자유 회전). 상태만 ros2_control 에 노출한다. -->
+    <joint name="front_${side}_wheel_joint" type="continuous">
+      <parent link="front_${side}_steer_link"/>
+      <child  link="front_${side}_wheel_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="0.0" velocity="60.0"/>
+      <dynamics damping="0.02" friction="0.05"/>
+    </joint>
+  </xacro:macro>
+
+  <!-- ================ 뒷바퀴(구동) ================ -->
+  <xacro:macro name="rear_corner" params="side reflect">
+    <xacro:wheel_link name="rear_${side}_wheel_link"/>
+
+    <joint name="rear_${side}_wheel_joint" type="continuous">
+      <parent link="base_link"/>
+      <child  link="rear_${side}_wheel_link"/>
+      <origin xyz="${-wheelbase/2.0} ${reflect*track/2.0} 0" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="8000.0" velocity="30.0"/>
+      <dynamics damping="0.05" friction="0.10"/>
+    </joint>
+  </xacro:macro>
+
+</robot>

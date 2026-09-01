@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>valet_robot</name>
+  <version>1.0.0</version>
+  <description>
+    차량형(Ackermann) 자율 발렛파킹 로봇 "valet_car" 의 URDF/Xacro 모델과
+    ros2_control(조향·구동) 구성, Gazebo Harmonic 스폰/브리지 런치.
+    parking_lot_world 패키지의 주차장 제원(축거 2.50 m / 최소회전반경 3.57 m /
+    풋프린트 4.50 x 1.90 m)에 맞춰 설계되었다.
+  </description>
+  <maintainer email="msk7676@naver.com">문규석</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- 모델 / 상태 발행 -->
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>joint_state_publisher_gui</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+
+  <!-- Gazebo Harmonic 연동 -->
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>gz_ros2_control</exec_depend>
+
+  <!-- ros2_control -->
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>ackermann_steering_controller</exec_depend>
+
+  <!-- twist_to_ackermann / teleop 노드 -->
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+
+  <!-- 주차장 월드 (valet_sim.launch.py 에서 include) -->
+  <exec_depend>parking_lot_world</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
