@@ -37,6 +37,8 @@ import sys
 SCALE = 1.0  # 1.0 = 실차 스케일. 소형 로봇이면 0.4 로 낮추고 재생성.
 
 
+
+
 def S(v):
     """스케일 적용."""
     return v * SCALE
@@ -432,8 +434,8 @@ def build_sdf(low_gfx=False):
     if low_gfx:
         o.append("<!-- 저사양 버전: 그림자 OFF, 보조조명 OFF (VM / 소프트웨어 렌더링용) -->\n")
     o.append("<sdf version='1.10'>\n  <world name='parking_lot'>\n")
-    head = """    <physics name='1ms' type='ignored'>
-      <max_step_size>0.001</max_step_size>
+    head = """    <physics name='4ms' type='ignored'>
+      <max_step_size>0.004</max_step_size>
       <real_time_factor>1.0</real_time_factor>
     </physics>
     <plugin filename='gz-sim-physics-system' name='gz::sim::systems::Physics'/>

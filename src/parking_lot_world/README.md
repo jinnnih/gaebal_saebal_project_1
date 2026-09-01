@@ -225,6 +225,17 @@ const { bounds, spots, pillars, hatched_zones } = await (await fetch('/parking_s
 
 ---
 
+## 7.5 변경 이력 (valet_robot 연동 중 실측으로 수정)
+
+| 항목 | 이전 | 이후 | 이유 |
+|---|---|---|---|
+| `max_step_size` | 0.001 | **0.004** | RTF 0.088 → 0.54. 913 kg 차량에 1 ms 는 과함 |
+| `parking_world.launch.py` | `IfCondition(['not ', gui])` | `UnlessCondition(gui)` | Jazzy 에서 `invalid condition expression` 로 `gui:=false` 가 안 뜸 |
+
+월드에 **렌더링 센서(카메라/라이다)를 추가하지 말 것.** gz-sim 이 이 GL 스택에서
+gpu_lidar 를 하나만 렌더링해서, 월드에 센서를 두면 스폰된 로봇의 라이다가 죽는다.
+(실측: 더미 센서 있음 0% / 없음 32%)
+
 ## 8. 맵 재생성
 
 기하를 바꾸려면 **반드시** `tools/generate_parking_lot.py` 를 수정하고 재생성한다.

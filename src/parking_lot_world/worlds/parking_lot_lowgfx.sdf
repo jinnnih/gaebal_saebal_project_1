@@ -3,8 +3,8 @@
 <!-- 저사양 버전: 그림자 OFF, 보조조명 OFF (VM / 소프트웨어 렌더링용) -->
 <sdf version='1.10'>
   <world name='parking_lot'>
-    <physics name='1ms' type='ignored'>
-      <max_step_size>0.001</max_step_size>
+    <physics name='4ms' type='ignored'>
+      <max_step_size>0.004</max_step_size>
       <real_time_factor>1.0</real_time_factor>
     </physics>
     <plugin filename='gz-sim-physics-system' name='gz::sim::systems::Physics'/>

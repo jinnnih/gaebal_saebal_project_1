@@ -2,8 +2,8 @@
 <!-- 자동 생성 파일 - tools/generate_parking_lot.py 를 수정하고 재생성할 것 -->
 <sdf version='1.10'>
   <world name='parking_lot'>
-    <physics name='1ms' type='ignored'>
-      <max_step_size>0.001</max_step_size>
+    <physics name='4ms' type='ignored'>
+      <max_step_size>0.004</max_step_size>
       <real_time_factor>1.0</real_time_factor>
     </physics>
     <plugin filename='gz-sim-physics-system' name='gz::sim::systems::Physics'/>
