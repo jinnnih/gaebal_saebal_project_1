@@ -12,7 +12,8 @@ from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription,
                             SetEnvironmentVariable)
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import (LaunchConfiguration, PathJoinSubstitution,
+                                  PythonExpression)
 from launch_ros.actions import Node
 
 
@@ -23,6 +24,13 @@ def generate_launch_description():
     world = LaunchConfiguration('world')
     gui = LaunchConfiguration('gui')
     paused = LaunchConfiguration('paused')
+
+    # paused:=false 면 -r 을 붙여 시뮬을 바로 돌린다.
+    # ! 이게 없으면 GUI 모드가 "일시정지" 상태로 떠서 /clock 이 흐르지 않고,
+    #   use_sim_time 을 쓰는 controller_manager 가 영영 활성화되지 않는다.
+    #   (사람이 GUI 재생 버튼을 눌러야만 진행됨)
+    run_flag = PythonExpression(
+        ["'' if '", paused, "' == 'true' else '-r '"])
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -40,7 +48,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(
                 os.path.join(ros_gz_sim, 'launch', 'gz_sim.launch.py')),
             launch_arguments={
-                'gz_args': ['-v4 ', world],
+                'gz_args': ['-v4 ', run_flag, world],
                 'on_exit_shutdown': 'true',
             }.items(),
             condition=IfCondition(gui)),
@@ -49,7 +57,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(
                 os.path.join(ros_gz_sim, 'launch', 'gz_sim.launch.py')),
             launch_arguments={
-                'gz_args': ['-v4 -s -r ', world],
+                'gz_args': ['-v4 -s ', run_flag, world],
                 'on_exit_shutdown': 'true',
             }.items(),
             condition=UnlessCondition(gui)),
