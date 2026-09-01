@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>발렛파킹 관제 대시보드</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --line: #30363d;
+    --fg: #e6edf3; --muted: #8b949e;
+    --free: #2ea043; --occupied: #57606a; --reserved: #d29922; --blocked: #f85149;
+    --accent: #58a6ff;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+         font: 14px/1.5 -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
+  header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap;
+           padding: 16px 20px; border-bottom: 1px solid var(--line); }
+  h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  .meta { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  main { display: grid; grid-template-columns: 1fr 260px; gap: 16px; padding: 16px 20px; }
+  @media (max-width: 900px) { main { grid-template-columns: 1fr; } }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
+  #map { display: block; width: 100%; height: auto; max-height: calc(100vh - 132px); }
+  .side section { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .side section:last-child { border-bottom: 0; }
+  .side h2 { font-size: 12px; margin: 0 0 10px; color: var(--muted);
+             text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  .row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px;
+            margin-right: 8px; vertical-align: -1px; }
+  .count { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .note { color: var(--muted); font-size: 12px; }
+  .note a { color: var(--accent); }
+  #tip { position: fixed; pointer-events: none; background: #1c2128; color: var(--fg);
+         border: 1px solid var(--line); border-radius: 6px; padding: 6px 9px; font-size: 12px;
+         opacity: 0; transition: opacity .1s; font-variant-numeric: tabular-nums; }
+  .spot { cursor: crosshair; }
+  .spot:hover { stroke: var(--accent); stroke-width: .18; }
+</style>
+</head>
+<body>
+<header>
+  <h1>발렛파킹 관제 대시보드</h1>
+  <span class="meta" id="hdr">불러오는 중…</span>
+</header>
+
+<main>
+  <div class="card"><svg id="map" preserveAspectRatio="xMidYMid meet"></svg></div>
+
+  <div class="card side">
+    <section>
+      <h2>점유 현황</h2>
+      <div id="legend"></div>
+    </section>
+    <section>
+      <h2>주차면 타입</h2>
+      <div id="types"></div>
+    </section>
+    <section>
+      <h2>레이아웃</h2>
+      <div id="layoutinfo" class="note"></div>
+    </section>
+    <section>
+      <h2>실시간 연동</h2>
+      <p class="note">
+        로봇 위치·경로·요청 큐는 rosbridge 토픽 계약이 확정되면 이 위에 얹힌다.
+        현재는 정적 레이아웃 + DB 점유 상태만 표시한다.
+      </p>
+    </section>
+  </div>
+</main>
+
+<div id="tip"></div>
+
+<script type="module">
+const STATUS = {
+  FREE:     { color: 'var(--free)',     label: '공차' },
+  OCCUPIED: { color: 'var(--occupied)', label: '점유' },
+  RESERVED: { color: 'var(--reserved)', label: '예약' },
+  BLOCKED:  { color: 'var(--blocked)',  label: '차단' },
+};
+const TYPE_MARK = { accessible: '장애인', ev: 'EV', standard: '' };
+const NS = 'http://www.w3.org/2000/svg';
+const el = (n, a = {}) => {
+  const e = document.createElementNS(NS, n);
+  for (const [k, v] of Object.entries(a)) e.setAttribute(k, v);
+  return e;
+};
+
+const [layout, state] = await Promise.all([
+  fetch('/api/layout').then(r => r.json()),
+  fetch('/api/spots/state').then(r => r.ok ? r.json() : { spots: [], lot_version: null }),
+]);
+
+const statusOf = new Map(state.spots.map(s => [s.spot_id, s.status]));
+const { bounds: b, spots, pillars, hatched_zones, entry_pose, exit_pose } = layout;
+
+const svg = document.getElementById('map');
+const pad = 1.2;
+svg.setAttribute('viewBox',
+  `${b.x_min - pad} ${-b.y_max - pad} ${b.x_max - b.x_min + pad * 2} ${b.y_max - b.y_min + pad * 2}`);
+
+// 도면은 map 프레임(y 위쪽 +)이고 SVG 는 y 아래쪽 + 라 스케일로 뒤집는다.
+const flip = el('g', { transform: 'scale(1,-1)' });
+const flat = el('g');   // 글자는 뒤집히면 안 되므로 별도 그룹에 y 부호만 바꿔 그린다
+svg.append(flip, flat);
+
+flip.append(el('rect', {
+  x: b.x_min, y: b.y_min, width: b.x_max - b.x_min, height: b.y_max - b.y_min,
+  fill: '#0b0f14', stroke: '#30363d', 'stroke-width': .12,
+}));
+
+for (const z of hatched_zones ?? []) {
+  const [x0, y0, x1, y1] = z.rect;
+  flip.append(el('rect', {
+    x: x0, y: y0, width: x1 - x0, height: y1 - y0,
+    fill: 'rgba(139,148,158,.10)', stroke: '#484f58',
+    'stroke-width': .07, 'stroke-dasharray': '.5 .35',
+  }));
+}
+
+const tip = document.getElementById('tip');
+for (const s of spots) {
+  const [x0, y0, x1, y1] = s.rect;
+  const st = statusOf.get(s.id) ?? 'FREE';
+  const r = el('rect', {
+    class: 'spot', x: x0, y: y0, width: x1 - x0, height: y1 - y0,
+    fill: STATUS[st].color, 'fill-opacity': st === 'OCCUPIED' ? .55 : .78,
+    stroke: '#0d1117', 'stroke-width': .09, rx: .18,
+  });
+  r.addEventListener('pointerenter', e => {
+    tip.textContent = `${s.id} · ${STATUS[st].label} · ${s.type} · 진입 ${s.entry_side}`;
+    tip.style.opacity = 1;
+  });
+  r.addEventListener('pointermove', e => {
+    tip.style.left = e.clientX + 14 + 'px';
+    tip.style.top = e.clientY + 14 + 'px';
+  });
+  r.addEventListener('pointerleave', () => (tip.style.opacity = 0));
+  flip.append(r);
+
+  flat.append(Object.assign(el('text', {
+    x: s.center[0], y: -s.center[1] + .35, 'text-anchor': 'middle',
+    'font-size': .95, fill: '#0d1117', 'font-weight': 700, 'pointer-events': 'none',
+  }), { textContent: s.id }));
+
+  if (TYPE_MARK[s.type]) {
+    flat.append(Object.assign(el('text', {
+      x: s.center[0], y: -s.center[1] + 1.7, 'text-anchor': 'middle',
+      'font-size': .62, fill: '#0d1117', 'font-weight': 600, 'pointer-events': 'none',
+    }), { textContent: TYPE_MARK[s.type] }));
+  }
+}
+
+for (const p of pillars ?? []) {
+  flip.append(el('rect', {
+    x: p.x - p.size / 2, y: p.y - p.size / 2, width: p.size, height: p.size,
+    fill: '#8b949e', stroke: '#c9d1d9', 'stroke-width': .04,
+  }));
+}
+
+for (const [pose, color, label] of [[entry_pose, '#58a6ff', '입구'], [exit_pose, '#a371f7', '출구']]) {
+  if (!pose) continue;
+  flip.append(el('circle', { cx: pose[0], cy: pose[1], r: .75, fill: color, 'fill-opacity': .25,
+                             stroke: color, 'stroke-width': .12 }));
+  flat.append(Object.assign(el('text', {
+    x: pose[0], y: -pose[1] + .32, 'text-anchor': 'middle', 'font-size': .85,
+    fill: color, 'font-weight': 700,
+  }), { textContent: label }));
+}
+
+// ── 사이드 패널 ──────────────────────────────────────────────
+const counts = {};
+for (const s of spots) { const st = statusOf.get(s.id) ?? 'FREE'; counts[st] = (counts[st] ?? 0) + 1; }
+document.getElementById('legend').innerHTML = Object.entries(STATUS)
+  .map(([k, v]) => `<div class="row"><span><span class="swatch" style="background:${v.color}"></span>${v.label}</span><span class="count">${counts[k] ?? 0}</span></div>`)
+  .join('');
+
+const tcount = {};
+for (const s of spots) tcount[s.type] = (tcount[s.type] ?? 0) + 1;
+document.getElementById('types').innerHTML = Object.entries(tcount)
+  .map(([k, n]) => `<div class="row"><span>${k}</span><span class="count">${n}</span></div>`).join('');
+
+const v = state.lot_version;
+document.getElementById('layoutinfo').innerHTML = [
+  `주차장 <b>${layout.lot_name}</b>`,
+  `크기 ${(b.x_max - b.x_min).toFixed(0)} × ${(b.y_max - b.y_min).toFixed(1)} m`,
+  `주차면 ${spots.length}면 · 기둥 ${(pillars ?? []).length}개`,
+  `최소회전반경 ${layout.robot_spec?.min_turning_radius?.toFixed(2) ?? '?'} m`,
+  v ? `lot_version #${v.id} · <code>${v.checksum.slice(0, 8)}</code>` : 'DB 미연결',
+].join('<br>');
+
+const free = counts.FREE ?? 0;
+document.getElementById('hdr').textContent =
+  `${layout.lot_name} · 주차면 ${spots.length}면 · 공차 ${free}면 · 점유율 ${(100 * (1 - free / spots.length)).toFixed(0)}%`;
+</script>
+</body>
+</html>

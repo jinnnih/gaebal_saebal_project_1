@@ -1,0 +1,15 @@
+{
+  "name": "valet-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "차량형 로봇 자율 발렛파킹 — 관제 대시보드 백엔드",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "db:seed": "node db/seed.ts",
+    "db:reset": "rm -f data/valet.db data/valet.db-wal data/valet.db-shm && node db/seed.ts",
+    "db:shell": "sqlite3 data/valet.db"
+  }
+}
