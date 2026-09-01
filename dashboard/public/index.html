@@ -165,7 +165,7 @@ for (const [pose, color, label] of [[entry_pose, '#58a6ff', '입구'], [exit_pos
   flip.append(el('circle', { cx: pose[0], cy: pose[1], r: .75, fill: color, 'fill-opacity': .25,
                              stroke: color, 'stroke-width': .12 }));
   flat.append(Object.assign(el('text', {
-    x: pose[0], y: -pose[1] + .32, 'text-anchor': 'middle', 'font-size': .85,
+    x: pose[0], y: -pose[1] + 2.1, 'text-anchor': 'middle', 'font-size': .95,
     fill: color, 'font-weight': 700,
   }), { textContent: label }));
 }
