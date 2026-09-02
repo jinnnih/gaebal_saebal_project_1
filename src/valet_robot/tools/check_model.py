@@ -39,6 +39,21 @@ WORLD_OBSTACLES = [
 FAILURES = []
 
 
+def pkg_share():
+    """소스 트리 / install share / ros2 run(lib) 어디서 실행해도 share 를 찾는다."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    cand = [os.path.dirname(here)]                  # <pkg>/tools -> <pkg>
+    try:
+        from ament_index_python.packages import get_package_share_directory
+        cand.insert(0, get_package_share_directory('valet_robot'))
+    except Exception:
+        pass
+    for c in cand:
+        if os.path.isfile(os.path.join(c, 'urdf', 'valet_car.urdf.xacro')):
+            return c
+    return cand[-1]
+
+
 def ok(msg):
     print('  [ok]   %s' % msg)
 
@@ -347,9 +362,8 @@ def check_map_pkg(length, width, wheelbase, track, steer_limit, r_achievable,
 
 
 def main():
-    here = os.path.dirname(os.path.abspath(__file__))
-    xacro_file = os.path.join(os.path.dirname(here), 'urdf',
-                              'valet_car.urdf.xacro')
+    share = pkg_share()
+    xacro_file = os.path.join(share, 'urdf', 'valet_car.urdf.xacro')
     if not os.path.isfile(xacro_file):
         print('URDF xacro 를 못 찾음:', xacro_file)
         return 2

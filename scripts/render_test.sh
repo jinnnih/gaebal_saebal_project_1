@@ -4,7 +4,10 @@
 #   glx_hw : X 디스플레이(:1)를 물려 GLX 경로 + 하드웨어
 #   glx_sw : X 디스플레이 + llvmpipe 순수 소프트웨어
 #            (EGL 에서는 mesa 가 소프트웨어 강제를 거부하지만 GLX 는 된다)
-cd "$HOME/valet_parking_ws"
+# 워크스페이스 경로는 스크립트 위치에서 구한다 (어디에 체크아웃하든 동작).
+WS="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+cd "$WS"
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 U=$(id -u)
@@ -34,7 +37,7 @@ PY
 }
 
 for MODE in egl_hw glx_hw glx_sw; do
-  bash kill_sim.sh > /dev/null 2>&1
+  bash "$WS/scripts/kill_sim.sh" > /dev/null 2>&1
   sleep 3
   ( unset DISPLAY LIBGL_ALWAYS_SOFTWARE GALLIUM_DRIVER
     export XDG_RUNTIME_DIR=/run/user/$U
@@ -56,4 +59,4 @@ for MODE in egl_hw glx_hw glx_sw; do
   grep -iE 'unable to open display|libEGL|Not allowed|render engine' /tmp/rt_$MODE.log \
     | sed 's/\x1b\[[0-9;]*m//g' | sort -u | head -2 | sed 's/^/    /'
 done
-bash kill_sim.sh > /dev/null 2>&1
+bash "$WS/scripts/kill_sim.sh" > /dev/null 2>&1

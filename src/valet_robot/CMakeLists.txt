@@ -17,6 +17,7 @@ install(DIRECTORY
 install(PROGRAMS
   scripts/twist_to_ackermann.py
   scripts/ackermann_teleop_key.py
+  scripts/demo_drive.py
   tools/check_model.py
   tools/smoke_probe.py
   tools/preview_model.py

@@ -19,8 +19,11 @@
 # 전제: 데스크톱 세션이 로그인돼 있어야 한다 (:1 과 /dev/dri ACL).
 #       로그인이 없으면 EGL 로 폴백하고 경고한다 — 그때 라이다는 못 믿는다.
 # ===========================================================================
+# 워크스페이스 경로는 스크립트 위치에서 구한다 (어디에 체크아웃하든 동작).
+WS="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 source /opt/ros/jazzy/setup.bash
-source "$HOME/valet_parking_ws/install/setup.bash"
+source "$WS/install/setup.bash"
 
 U=$(id -u)
 export XDG_RUNTIME_DIR=/run/user/$U

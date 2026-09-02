@@ -6,7 +6,7 @@
 Ackermann 조향(좌우 바퀴 각도가 다름), 최소회전반경, 후진 조향이 눈으로 보인다.
 한 사이클이 끝나면 시작 위치로 리셋해서 주차 차량에 안 닿게 한다.
 
-  ros2 run 없이:  python3 demo_drive.py
+  ros2 run valet_robot demo_drive.py
   중지: Ctrl-C (정지 명령 보내고 종료)
 """
 import math

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # 돌고 있는 헤드리스 서버에 GUI 창만 붙인다.
 #
-#   bash show_gui.sh        소프트웨어 렌더링 (기본) — 깜빡임 없음
-#   HW=1 bash show_gui.sh   하드웨어 GL — 빠르지만 SVGA3D 깜빡임 발생
+#   bash "$WS/scripts/show_gui.sh"        소프트웨어 렌더링 (기본) — 깜빡임 없음
+#   HW=1 bash "$WS/scripts/show_gui.sh"   하드웨어 GL — 빠르지만 SVGA3D 깜빡임 발생
 #
 # 왜 GUI 를 소프트웨어로 돌려도 되는가:
 #   서버(gz sim -s)와 GUI(gz sim -g)는 별개 프로세스다. 물리와 센서 렌더링은
@@ -12,9 +12,12 @@
 #    환경으로 묶여 있었기 때문이다)
 #
 #   터미널 1:  bash run_sim.sh      서버 + 라이다 (llvmpipe)
-#   터미널 2:  bash show_gui.sh     GUI 창
+#   터미널 2:  bash "$WS/scripts/show_gui.sh"     GUI 창
+# 워크스페이스 경로는 스크립트 위치에서 구한다 (어디에 체크아웃하든 동작).
+WS="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 source /opt/ros/jazzy/setup.bash
-source "$HOME/valet_parking_ws/install/setup.bash"
+source "$WS/install/setup.bash"
 
 U=$(id -u)
 export XDG_RUNTIME_DIR=/run/user/$U

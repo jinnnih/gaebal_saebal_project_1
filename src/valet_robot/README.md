@@ -210,8 +210,20 @@ valet_robot/
 ├── scripts/
 │   ├── twist_to_ackermann.py         cmd_vel → 컨트롤러 reference + 기구학 제한
 │   └── ackermann_teleop_key.py       속도/조향각 방식 키보드 수동주행
-└── tools/
-    └── check_model.py                ★ 모델 자기검증 + 맵 패키지 정합성 검사
+├── tools/
+│   ├── fit_car_mesh.py               원본 메시를 우리 제원에 맞춰 변형
+│   ├── preview_model.py              Gazebo 없이 4면도 PNG 생성
+│   ├── smoke_probe.py                실제 주행 계측 (8항목)
+│   └── check_model.py                ★ 모델 자기검증 + 맵 패키지 정합성 검사
+└── meshes/                           실차 외형 (meshes/README.md 참고)
+
+워크스페이스 루트
+└── scripts/
+    ├── run_sim.sh       서버 + 라이다 (헤드리스)
+    ├── show_gui.sh      GUI 창 붙이기
+    ├── kill_sim.sh      전부 정리
+    ├── smoke_test.sh    빌드 -> 검증 -> 기동 -> 주행 계측
+    └── render_test.sh   라이다 렌더 경로 3종 비교 (진단)
 ```
 
 **치수를 바꿀 때는 `urdf/common.xacro` 만 고치고 `tools/check_model.py` 를 돌린다.**
@@ -251,21 +263,21 @@ ros2 launch valet_robot description.launch.py
 
 ```bash
 # 터미널 1 : 서버 + 라이다 (llvmpipe — 13장 (1) 참고)
-bash run_sim.sh
+bash scripts/run_sim.sh
 
 # 터미널 2 : Gazebo GUI 창 (하드웨어 GL). 눈으로 볼 때만
-bash show_gui.sh
+bash scripts/show_gui.sh
 
 # 터미널 3 : 키보드 수동주행
 ros2 run valet_robot ackermann_teleop_key.py
 #   w/s 속도 ±0.2   a/d 조향 ±3°   e 조향중립   space 정지   q 종료
 
 # (또는) 자동 슬라롬 데모
-bash demo_drive.sh
+ros2 run valet_robot demo_drive.py
 ```
 
 > `ros2 launch valet_robot valet_sim.launch.py` 를 직접 쓰면 렌더 경로 설정이
-> 빠져서 라이다가 90% 이상 유실된다. **반드시 `run_sim.sh` 를 거칠 것.**
+> 빠져서 라이다가 90% 이상 유실된다. **반드시 `scripts/run_sim.sh` 를 거칠 것.**
 
 토픽으로 직접 넣어도 된다:
 
@@ -422,7 +434,7 @@ libEGL warning: Not allowed to force software rendering when API
 동작하고 **유효 프레임이 100% 가 된다.** 라이다 렌더 타깃이 720x1 로 작아서 소프트웨어
 래스터라이즈로도 RTF 1.0 이 유지된다.
 
-`run_sim.sh` 가 이 설정을 자동으로 잡는다. 디스플레이가 없으면 EGL 로 폴백하면서 경고한다.
+`scripts/run_sim.sh` 가 이 설정을 자동으로 잡는다. 디스플레이가 없으면 EGL 로 폴백하면서 경고한다.
 
 **전제**: 데스크톱 세션이 로그인돼 있어야 한다 (`:1` 과 `/dev/dri` ACL). 로그인 없이
 쓰려면 `sudo usermod -aG render,video ubuntu` 로 그룹을 주거나 Xvfb 를 띄워야 한다.
@@ -433,11 +445,11 @@ libEGL warning: Not allowed to force software rendering when API
 전부 서버에서 돌기 때문에, GUI 를 어떻게 그리든 RTF 와 라이다 성능은 영향받지 않는다.
 
 ```bash
-터미널 1:  bash run_sim.sh      # 서버 + 라이다 (llvmpipe)
-터미널 2:  bash show_gui.sh     # GUI 창만
+터미널 1:  bash scripts/run_sim.sh      # 서버 + 라이다 (llvmpipe)
+터미널 2:  bash scripts/show_gui.sh     # GUI 창만
 ```
 
-`show_gui.sh` 는 **소프트웨어 렌더링이 기본**이다. VMware SVGA3D 하드웨어 경로에서
+`scripts/show_gui.sh` 는 **소프트웨어 렌더링이 기본**이다. VMware SVGA3D 하드웨어 경로에서
 화면 전체가 깜빡이기 때문이다(기존 이슈 #4). 예전에는 이 우회를 쓰면 시뮬 전체가
 같이 느려져서 못 썼는데, 서버를 분리한 지금은 **창 그리는 것만** 느려진다.
 

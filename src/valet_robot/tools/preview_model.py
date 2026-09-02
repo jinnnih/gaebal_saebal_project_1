@@ -21,7 +21,22 @@ OUT = sys.argv[1] if len(sys.argv) > 1 else 'model_preview.png'
 STEER = math.radians(float(sys.argv[2])) if len(sys.argv) > 2 else 0.0
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-PKG = os.path.dirname(HERE)
+
+
+def _pkg_share():
+    cand = [os.path.dirname(HERE)]
+    try:
+        from ament_index_python.packages import get_package_share_directory
+        cand.insert(0, get_package_share_directory('valet_robot'))
+    except Exception:
+        pass
+    for c in cand:
+        if os.path.isfile(os.path.join(c, 'urdf', 'valet_car.urdf.xacro')):
+            return c
+    return cand[-1]
+
+
+PKG = _pkg_share()
 XACRO = os.path.join(PKG, 'urdf', 'valet_car.urdf.xacro')
 CFG = os.path.join(PKG, 'config', 'controllers.yaml')
 
