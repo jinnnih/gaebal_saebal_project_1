@@ -24,6 +24,8 @@
   <xacro:arg name="sim" default="true"/>
   <!-- 라이다를 뺀 채로 띄우고 싶을 때 (렌더링 없이 물리/제어만 검증). -->
   <xacro:arg name="lidar" default="true"/>
+  <!-- mesh:=false 면 외형이 박스 조합으로 나온다 (메시 없이 확인할 때). -->
+  <xacro:arg name="mesh" default="true"/>
   <xacro:arg name="controllers_file"
              default="$(find valet_robot)/config/controllers.yaml"/>
 
@@ -41,7 +43,7 @@
   </joint>
 
   <link name="base_link">
-    <xacro:car_body/>
+    <xacro:car_body use_mesh="$(arg mesh)"/>
 
     <!-- 관성: 차체 전체를 하나의 등가 박스로 근사. 무게중심은 실차처럼 낮게. -->
     <xacro:box_inertia m="${base_mass}" x="4.50" y="1.70" z="0.90">

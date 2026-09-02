@@ -8,8 +8,8 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import (DeclareLaunchArgument, IncludeLaunchDescription,
-                            SetEnvironmentVariable)
+from launch.actions import (AppendEnvironmentVariable, DeclareLaunchArgument,
+                            IncludeLaunchDescription)
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import (LaunchConfiguration, PathJoinSubstitution,
@@ -39,10 +39,14 @@ def generate_launch_description():
         DeclareLaunchArgument('gui', default_value='true'),
         DeclareLaunchArgument('paused', default_value='false'),
 
-        # 월드에서 model:// URI 로 모델을 찾을 수 있게
-        SetEnvironmentVariable('GZ_SIM_RESOURCE_PATH',
-                               os.path.join(pkg, 'models') + os.pathsep +
-                               os.path.join(pkg, 'worlds')),
+        # 월드에서 model:// URI 로 모델을 찾을 수 있게.
+        # ! Set 이 아니라 Append 여야 한다. Set 으로 덮어쓰면 다른 패키지가
+        #   ament 환경 훅으로 등록해 둔 경로가 지워져서, 로봇 패키지의
+        #   package://.../meshes/*.obj 를 Gazebo 가 못 찾는다.
+        AppendEnvironmentVariable('GZ_SIM_RESOURCE_PATH',
+                                  os.path.join(pkg, 'models')),
+        AppendEnvironmentVariable('GZ_SIM_RESOURCE_PATH',
+                                  os.path.join(pkg, 'worlds')),
 
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(

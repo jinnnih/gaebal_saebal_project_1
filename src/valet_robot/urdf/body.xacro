@@ -10,13 +10,15 @@
      ========================================================================== -->
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-  <!-- 충돌 박스 하나 = 같은 크기의 visual + collision -->
-  <xacro:macro name="body_box" params="name x y z sx sy sz material collision:=true">
-    <visual name="${name}_vis">
-      <origin xyz="${x} ${y} ${z}" rpy="0 0 0"/>
-      <geometry><box size="${sx} ${sy} ${sz}"/></geometry>
-      <material name="${material}"/>
-    </visual>
+  <!-- 박스 하나. visual 은 mesh 모드에서 끌 수 있다 -->
+  <xacro:macro name="body_box" params="name x y z sx sy sz material collision:=true visual:=true">
+    <xacro:if value="${visual}">
+      <visual name="${name}_vis">
+        <origin xyz="${x} ${y} ${z}" rpy="0 0 0"/>
+        <geometry><box size="${sx} ${sy} ${sz}"/></geometry>
+        <material name="${material}"/>
+      </visual>
+    </xacro:if>
     <xacro:if value="${collision}">
       <collision name="${name}_col">
         <origin xyz="${x} ${y} ${z}" rpy="0 0 0"/>
@@ -49,69 +51,84 @@
   </xacro:macro>
 
   <!-- ===================== 차체 전체 ===================== -->
-  <xacro:macro name="car_body">
+  <xacro:macro name="car_body" params="use_mesh:=true">
+
+    <!-- === 외형: 메시 (실차 Prius 를 우리 제원에 맞춰 변형) === -->
+    <xacro:if value="${use_mesh}">
+      <visual name="body_mesh_vis">
+        <origin xyz="0 0 ${-base_z}" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="package://valet_robot/meshes/body.obj"/>
+        </geometry>
+      </visual>
+    </xacro:if>
+
 
     <!-- 하부: 플로어팬(축 사이만) + 앞뒤 범퍼. 사이 빈 공간이 휠아치 -->
     <xacro:body_box name="floor_pan" x="0" y="0" z="${pan_cz}"
                     sx="${pan_len}" sy="${pan_w}" sz="${pan_h}"
-                    material="valet_body"/>
+                    material="valet_body" visual="${not use_mesh}"/>
     <xacro:body_box name="bumper_f" x="${fascia_cx}" y="0" z="${pan_cz}"
                     sx="${fascia_len}" sy="${fascia_w}" sz="${pan_h}"
-                    material="valet_body"/>
+                    material="valet_body" visual="${not use_mesh}"/>
     <xacro:body_box name="bumper_r" x="${-fascia_cx}" y="0" z="${pan_cz}"
                     sx="${fascia_len}" sy="${fascia_w}" sz="${pan_h}"
-                    material="valet_body"/>
+                    material="valet_body" visual="${not use_mesh}"/>
 
     <!-- 벨트라인. 캐빈/후방(높음) + 보닛부(낮음) 로 나눠 앞머리를 낮춘다.
          둘을 합쳐 전장 4.50 x 전폭 1.90 이 나온다. -->
     <xacro:body_box name="belt_rear" x="${beltr_cx}" y="0" z="${beltr_cz}"
                     sx="${beltr_len}" sy="${body_width}" sz="${beltr_h}"
-                    material="valet_body"/>
+                    material="valet_body" visual="${not use_mesh}"/>
     <xacro:body_box name="belt_front" x="${beltf_cx}" y="0" z="${beltf_cz}"
                     sx="${beltf_len}" sy="${body_width}" sz="${beltf_h}"
-                    material="valet_body"/>
+                    material="valet_body" visual="${not use_mesh}"/>
 
     <!-- 보닛(경사판) / 트렁크 리드 -->
-    <visual name="hood_vis">
-      <origin xyz="${hood_cx} 0 ${hood_cz}" rpy="0 ${hood_pitch} 0"/>
-      <geometry><box size="${hood_len} ${lid_w} ${lid_h}"/></geometry>
-      <material name="valet_body"/>
-    </visual>
+    <xacro:unless value="${use_mesh}">
+      <visual name="hood_vis">
+        <origin xyz="${hood_cx} 0 ${hood_cz}" rpy="0 ${hood_pitch} 0"/>
+        <geometry><box size="${hood_len} ${lid_w} ${lid_h}"/></geometry>
+        <material name="valet_body"/>
+      </visual>
+    </xacro:unless>
     <xacro:body_box name="trunk" x="${trunk_cx}" y="0" z="${lid_cz}"
                     sx="${trunk_len}" sy="${lid_w}" sz="${lid_h}"
-                    material="valet_body" collision="false"/>
+                    material="valet_body" collision="false" visual="${not use_mesh}"/>
 
     <!-- 캐빈(그린하우스) + 루프 -->
     <xacro:body_box name="cabin" x="${cabin_cx}" y="0" z="${cabin_cz}"
                     sx="${cabin_len}" sy="${cabin_w}" sz="${cabin_h}"
-                    material="valet_glass"/>
+                    material="valet_glass" visual="${not use_mesh}"/>
     <xacro:body_box name="roof" x="${cabin_cx}" y="0" z="${roof_cz}"
                     sx="1.30" sy="1.68" sz="0.04"
-                    material="valet_body" collision="false"/>
+                    material="valet_body" collision="false" visual="${not use_mesh}"/>
 
-    <!-- 앞유리 / 뒷유리 (기울어진 판) -->
-    <xacro:glass_panel name="windshield" x="0.60"  z="0.81" plen="0.68" pitch="0.491"/>
-    <xacro:glass_panel name="rearglass"  x="-1.085" z="0.82" plen="0.41" pitch="-0.838"/>
+    <xacro:unless value="${use_mesh}">
+      <!-- 앞유리 / 뒷유리 (기울어진 판) -->
+      <xacro:glass_panel name="windshield" x="0.60"  z="0.81" plen="0.68" pitch="0.491"/>
+      <xacro:glass_panel name="rearglass"  x="-1.085" z="0.82" plen="0.41" pitch="-0.838"/>
 
-    <!-- 센서 포드 (지붕 위) -->
-    <visual name="sensor_pod_vis">
-      <origin xyz="0 0 ${pod_cz}" rpy="0 0 0"/>
-      <geometry><cylinder radius="0.10" length="0.05"/></geometry>
-      <material name="valet_metal"/>
-    </visual>
+      <!-- 센서 포드 (지붕 위) -->
+      <visual name="sensor_pod_vis">
+        <origin xyz="0 0 ${pod_cz}" rpy="0 0 0"/>
+        <geometry><cylinder radius="0.10" length="0.05"/></geometry>
+        <material name="valet_metal"/>
+      </visual>
 
-    <!-- 등화 / 그릴 / 사이드미러 -->
-    <xacro:pair_box name="headlight" x="2.245" z="0.49"
-                    sx="0.05" sy="0.34" sz="0.14" material="valet_light" y_off="0.60"/>
-    <xacro:pair_box name="taillight" x="-2.245" z="0.55"
-                    sx="0.05" sy="0.30" sz="0.12" material="valet_tail" y_off="0.66"/>
-    <xacro:body_box name="grille" x="2.245" y="0" z="0.29"
-                    sx="0.05" sy="1.00" sz="0.16"
-                    material="valet_dark" collision="false"/>
-    <!-- 미러는 전폭 밖으로 나가므로 충돌 없음 (실차도 그렇다).
-         바깥끝 1.025 m — Nav2 footprint 반폭 1.00 + padding 0.03 안쪽 -->
-    <xacro:pair_box name="mirror" x="0.75" z="0.73"
-                    sx="0.09" sy="0.11" sz="0.07" material="valet_dark" y_off="0.97"/>
+      <!-- 등화 / 그릴 / 사이드미러 -->
+      <xacro:pair_box name="headlight" x="2.245" z="0.49"
+                      sx="0.05" sy="0.34" sz="0.14" material="valet_light" y_off="0.60"/>
+      <xacro:pair_box name="taillight" x="-2.245" z="0.55"
+                      sx="0.05" sy="0.30" sz="0.12" material="valet_tail" y_off="0.66"/>
+      <xacro:body_box name="grille" x="2.245" y="0" z="0.29"
+                      sx="0.05" sy="1.00" sz="0.16"
+                      material="valet_dark" collision="false" visual="${not use_mesh}"/>
+      <!-- 미러는 전폭 밖으로 나가므로 충돌 없음 (실차도 그렇다).
+           바깥끝 1.025 m — Nav2 footprint 반폭 1.00 + padding 0.03 안쪽 -->
+      <xacro:pair_box name="mirror" x="0.75" z="0.73"
+                      sx="0.09" sy="0.11" sz="0.07" material="valet_dark" y_off="0.97"/>
+    </xacro:unless>
 
   </xacro:macro>
 </robot>

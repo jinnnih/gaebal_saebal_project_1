@@ -1,0 +1,59 @@
+# valet_robot 차량 재질
+# 원본: Gazebo Fuel OpenRobotics/Prius Hybrid (CC0 1.0, 저자 Ian Chen)
+# 텍스처 경로만 바꿨다. tools/fit_car_mesh.py 참고
+# 3ds Max Wavefront OBJ Exporter v0.97b - (c)2007 guruware
+# File Created: 10.01.2017 19:57:05
+
+newmtl Hybrid
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000
+	illum 2
+	Ka 0.5882 0.5882 0.5882
+	Kd 0.5882 0.5882 0.5882
+	Ks 1.0000 1.0000 1.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka textures/Hybrid.png
+	map_Kd textures/Hybrid.png
+
+newmtl Wheels3
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000
+	illum 2
+	Ka 0.5882 0.5882 0.5882
+	Kd 0.5882 0.5882 0.5882
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka textures/Wheels3.png
+	map_Kd textures/Wheels3.png
+
+newmtl Hybrid_Interior
+	Ns 10.0000
+	Ni 1.5000
+	d 1.0000
+	Tr 0.0000
+	Tf 1.0000 1.0000 1.0000
+	illum 2
+	Ka 0.5882 0.5882 0.5882
+	Kd 0.5882 0.5882 0.5882
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000
+	map_Ka textures/Hybrid_Interior.png
+	map_Kd textures/Hybrid_Interior.png
+
+newmtl Windows
+	Ns 0.0000
+	Ni 1.5000
+	d 0.1000
+	Tr 0.9000
+	Tf 0.1000 0.1000 0.1000
+	illum 2
+	Ka 0.2627 0.2627 0.2627
+	Kd 0.2627 0.2627 0.2627
+	Ks 0.0000 0.0000 0.0000
+	Ke 0.0000 0.0000 0.0000

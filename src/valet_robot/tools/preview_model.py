@@ -104,12 +104,17 @@ def collect(root):
                              [0.6, 0.6, 0.6, 1])
             b = v.find('geometry/box')
             cy = v.find('geometry/cylinder')
+            me = v.find('geometry/mesh')
             if b is not None:
                 h = [float(t) / 2 for t in b.get('size').split()]
                 prims.append((c, R, h, col, 'box'))
             elif cy is not None:
                 r = float(cy.get('radius')); ln = float(cy.get('length'))
                 prims.append((c, R, [r, r, ln / 2], col, 'cyl'))
+            elif me is not None:
+                mv, mf = load_obj(me.get('filename'))
+                if mv:
+                    prims.append((c, R, (mv, mf), col, 'mesh'))
     return prims
 
 
@@ -120,8 +125,39 @@ FACES = [(0, 1, 3, 2), (4, 5, 7, 6), (0, 1, 5, 4),
 NSEG = 20
 
 
+MESH_CACHE = {}
+
+
+def load_obj(uri):
+    """package://valet_robot/meshes/x.obj 를 읽어 (정점, 삼각형면) 반환."""
+    path = uri.replace('package://valet_robot/', PKG + '/')
+    if path in MESH_CACHE:
+        return MESH_CACHE[path]
+    if not os.path.isfile(path):
+        MESH_CACHE[path] = ([], [])
+        return MESH_CACHE[path]
+    verts, faces = [], []
+    for line in open(path, encoding='utf-8', errors='ignore'):
+        p = line.split()
+        if not p:
+            continue
+        if p[0] == 'v':
+            verts.append([float(x) for x in p[1:4]])
+        elif p[0] == 'f':
+            idx = []
+            for tok in p[1:]:
+                i = int(tok.split('/')[0])
+                idx.append(i - 1 if i > 0 else len(verts) + i)
+            for k in range(1, len(idx) - 1):      # 팬 삼각형화
+                faces.append((idx[0], idx[k], idx[k + 1]))
+    MESH_CACHE[path] = (verts, faces)
+    return MESH_CACHE[path]
+
+
 def mesh(h, kind):
     """로컬 좌표계의 (정점, 면) 반환. 원통은 z 축이 축방향."""
+    if kind == 'mesh':
+        return h                      # (정점, 면) 그대로
     if kind == 'box':
         return ([[h[0] * s[0], h[1] * s[1], h[2] * s[2]] for s in CORNERS],
                 FACES)

@@ -9,6 +9,7 @@ install(DIRECTORY
   launch
   rviz
   tools
+  meshes
   DESTINATION share/${PROJECT_NAME}
 )
 
@@ -21,5 +22,12 @@ install(PROGRAMS
   tools/preview_model.py
   DESTINATION lib/${PROJECT_NAME}
 )
+
+# GZ_SIM_RESOURCE_PATH 에 install/share 를 등록한다.
+# URDF 의 package://valet_robot/meshes/... 를 Gazebo 가 찾을 수 있게 하려면
+# share 의 부모가 아니라 share 자체가 들어가야 한다
+# (gz 가 package:// 의 스킴을 떼고 valet_robot/meshes/... 로 검색한다).
+ament_environment_hooks(
+  "${CMAKE_CURRENT_SOURCE_DIR}/hooks/${PROJECT_NAME}.dsv.in")
 
 ament_package()
