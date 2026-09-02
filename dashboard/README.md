@@ -146,13 +146,9 @@ npm run mock:ros     # 터미널 3 — ws://127.0.0.1:9090
 ROSBRIDGE_URL=ws://172.30.1.11:9090 npm run dev:api
 ```
 
-## 아직 안 된 것
+---
 
-로봇 쪽에 주차면 관리 노드와 BT 노드가 없어서 `/valet/spot_states` 와
-`/valet/mission_status` 는 **현재 발행자가 없다**(#9 규석 답변). 그래서 지금은
-더미 데이터로 화면을 검증하고 있다.
-
-계약이 확정돼 있으므로 실제 노드가 붙을 때 바꿀 것은 수집기 한 겹뿐이다.
+## 진행 상황
 
 - [x] rosbridge WebSocket 수집기 (`mission_event` / `spot_state` 적재) — `backend/src/collector.ts`
 - [x] `POST /api/requests` 에서 `/valet/request` 토픽 발행
