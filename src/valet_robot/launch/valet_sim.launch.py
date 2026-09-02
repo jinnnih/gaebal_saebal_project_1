@@ -32,6 +32,7 @@ def generate_launch_description():
     use_rviz = LaunchConfiguration('rviz')
     use_nav2 = LaunchConfiguration('nav2')
     use_lidar = LaunchConfiguration('lidar')
+    use_filters = LaunchConfiguration('use_costmap_filters')
     x = LaunchConfiguration('x')
     y = LaunchConfiguration('y')
     yaw = LaunchConfiguration('yaw')
@@ -57,6 +58,7 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(world_pkg, 'launch', 'nav2_valet.launch.py')),
+            launch_arguments={'use_costmap_filters': use_filters}.items(),
             condition=IfCondition(use_nav2))])
 
     return LaunchDescription([
@@ -68,6 +70,10 @@ def generate_launch_description():
         DeclareLaunchArgument('rviz', default_value='false'),
         DeclareLaunchArgument('nav2', default_value='false'),
         DeclareLaunchArgument('lidar', default_value='true'),
+        # keepout 필터: 주차면 내부를 진입금지로 만들어 통로 주행 중
+        # 플래너가 주차면을 가로지르는 것을 막는다. 주차할 때는 런타임으로
+        # 꺼야 한다 (ParkManeuver 진입 직전) — 이슈 #7.
+        DeclareLaunchArgument('use_costmap_filters', default_value='false'),
         DeclareLaunchArgument('x', default_value='-23.00'),
         DeclareLaunchArgument('y', default_value='-18.30'),
         DeclareLaunchArgument('yaw', default_value='0.0'),

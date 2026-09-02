@@ -5,6 +5,7 @@ find_package(ament_cmake REQUIRED)
 
 install(DIRECTORY
   worlds
+  behavior_trees
   models
   maps
   config

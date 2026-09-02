@@ -50,9 +50,21 @@ def generate_launch_description():
         Node(package='nav2_amcl', executable='amcl', name='amcl',
              output='screen', parameters=[params, common]),
     ]
+    # Ackermann 전용 BT. 기본 트리는 복구행동에 Spin 을 쓰는데 차량형은
+    # 제자리 회전이 안 돼 behavior_plugins 에서 Spin 을 뺐고, 그러면 기본
+    # 트리가 로드 단계에서 죽는다. 경로는 여기서 절대경로로 넘긴다
+    # (YAML 파라미터 파일에서는 $(find-pkg-share ...) 가 치환되지 않는다).
+    bt_params = {
+        'default_nav_to_pose_bt_xml': os.path.join(
+            pkg, 'behavior_trees', 'navigate_to_pose_ackermann.xml'),
+        'default_nav_through_poses_bt_xml': os.path.join(
+            pkg, 'behavior_trees', 'navigate_through_poses_ackermann.xml'),
+    }
+
     for pkg_name, exe, name in NAV2_NODES:
+        extra = [bt_params] if name == 'bt_navigator' else []
         nodes.append(Node(package=pkg_name, executable=exe, name=name,
-                          output='screen', parameters=[params, common],
+                          output='screen', parameters=[params, common] + extra,
                           remappings=[('cmd_vel', 'cmd_vel_nav')]))
 
     lifecycle = ['map_server', 'amcl'] + [n for _, _, n in NAV2_NODES]

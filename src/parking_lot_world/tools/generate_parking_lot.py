@@ -791,21 +791,23 @@ bt_navigator:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
     navigate_through_poses:
       plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator"
-    # 커스텀 BT 노드 (팀원 A 산출물)
-    plugin_lib_names:
-      - nav2_compute_path_to_pose_action_bt_node
-      - nav2_follow_path_action_bt_node
-      - nav2_spin_action_bt_node
-      - nav2_back_up_action_bt_node
-      - nav2_clear_costmap_service_bt_node
-      - nav2_rate_controller_bt_node
-      - nav2_recovery_node_bt_node
-      - nav2_pipeline_sequence_bt_node
-      - nav2_round_robin_node_bt_node
-      - valet_find_parking_spot_bt_node
-      - valet_park_maneuver_bt_node
-      - valet_unpark_maneuver_bt_node
-      - valet_report_status_bt_node
+
+    # ! 기본 BT 를 쓰면 안 된다.
+    #   Nav2 기본 트리는 복구행동에 Spin(제자리 회전)을 쓰는데, 차량형은
+    #   제자리 회전이 불가능해서 behavior_plugins 에서 Spin 을 뺐다.
+    #   그러면 기본 트리가 로드 단계에서 죽는다:
+    #     "spin" action server not available after waiting for 1.00s
+    #   Spin 자리를 BackUp / DriveOnHeading 으로 바꾼 트리를 쓴다.
+    #   경로는 nav2_valet.launch.py 가 절대경로로 넘긴다.
+    #   ($(find-pkg-share ...) 는 런치 파일에서만 치환되고 YAML 파라미터
+    #    파일에서는 문자열 그대로 남는다 — 실측으로 확인)
+    # ! plugin_lib_names 를 여기서 오버라이드하지 말 것.
+    #   Nav2 Jazzy 는 표준 BT 노드 전체를 기본값으로 갖고 있는데, 일부만 적어
+    #   덮어쓰면 bt_navigator 가 뜨다가 죽는다 (실측):
+    #     FATAL: Failed to create navigator id navigate_to_pose.
+    #            Exception: ID [ComputePathToPose] already registered
+    #   커스텀 BT 노드(4주차 valet_* 4종)를 붙일 때는 Nav2 의 기본 목록을
+    #   그대로 복사한 뒤 뒤에 추가해야 한다.
 
 controller_server:
   ros__parameters:
@@ -1018,8 +1020,15 @@ global_costmap:
           obstacle_max_range: 25.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 2.5
-        inflation_radius: 0.85
+        # ! 풋프린트 4.6 x 2.0 기준 내접원 1.03 m / 외접원 2.55 m.
+        #   inflation_radius 가 내접원보다 작으면 "확실히 충돌하는 셀"이
+        #   치명값으로 안 찍혀서 위험하다. Nav2 도 ERROR 를 낸다.
+        #   Smac 은 외접원(2.55) 이상을 권장하지만, 주차면 폭이 2.5 m 라
+        #   그렇게 부풀리면 주차면이 통째로 막힌다. 내접원 + 여유로 잡고,
+        #   대신 cost_scaling_factor 를 키워 비용이 빨리 떨어지게 한다.
+        #   (주차 기동용 프로파일 분리는 5주차 항목)
+        cost_scaling_factor: 4.0
+        inflation_radius: 1.10
       # 아래 두 필터는 filter 서버가 떠 있어야 동작한다.
       #   ros2 launch parking_lot_world nav2_valet.launch.py use_costmap_filters:=true
       # keepout: 주차면 내부를 진입금지로 만들어 통로 주행 중 가로지르기를 막는다.
@@ -1027,7 +1036,12 @@ global_costmap:
       #   ros2 param set /global_costmap/global_costmap keepout_filter.enabled false
       keepout_filter:
         plugin: "nav2_costmap_2d::KeepoutFilter"
-        enabled: false
+        # ! 런타임 토글(ros2 param set)은 실제로 안 먹는다 (실측).
+        #   CostmapFilter 가 enabled 를 초기화 때 캐시하고 동적 파라미터
+        #   콜백을 등록하지 않아서, param 값만 바뀌고 레이어 동작은 그대로다.
+        #   -> 설정 파일에서 켜 둔다. 주차 기동에서 끄는 방법은 이슈 #7.
+        #   (필터 서버가 안 떠 있으면 마스크를 못 받아 아무 영향 없다)
+        enabled: true
         filter_info_topic: "/costmap_filter_info"
       speed_filter:
         plugin: "nav2_costmap_2d::SpeedFilter"
@@ -1063,8 +1077,9 @@ local_costmap:
           obstacle_max_range: 16.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.55
+        # 로컬도 내접원(1.03) 이상이어야 한다. 위 global 주석 참고.
+        cost_scaling_factor: 4.5
+        inflation_radius: 1.10
 
 map_server:
   ros__parameters:

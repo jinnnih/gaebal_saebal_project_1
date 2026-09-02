@@ -1,0 +1,71 @@
+<!--
+  차량형(Ackermann) 로봇용 NavigateToPose 트리.
+
+  Nav2 기본 트리(navigate_to_pose_w_replanning_and_recovery.xml)는 복구행동에
+  Spin(제자리 회전)을 쓴다. 차량형은 제자리 회전이 불가능해서
+  nav2_ackermann.yaml 의 behavior_plugins 에서 Spin 을 뺐고, 그러면 기본 트리가
+  로드 단계에서 죽는다 (실측):
+
+      "spin" action server not available after waiting for 1.00s
+      Exception when loading BT: Action server spin not available
+
+  그래서 Spin 자리를 차량형이 실제로 할 수 있는 동작으로 바꿨다.
+
+    Spin(1.57 rad)  ->  BackUp(0.60 m)          후진으로 빠져나온다
+                        DriveOnHeading(0.40 m)  전진으로 빠져나온다
+
+  후진 거리를 0.30 -> 0.60 으로 키운 이유: 전장 4.5 m 차량이라 0.3 m 로는
+  장애물에서 못 벗어난다. 후진 속도는 nav2_ackermann.yaml 의 vx_min(-0.60)
+  안쪽인 0.25 m/s 로 잡았다.
+-->
+<root BTCPP_format="4" main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="6" name="NavigateRecovery">
+      <PipelineSequence name="NavigateWithReplanning">
+        <ControllerSelector selected_controller="{selected_controller}" default_controller="FollowPath" topic_name="controller_selector"/>
+        <PlannerSelector selected_planner="{selected_planner}" default_planner="GridBased" topic_name="planner_selector"/>
+        <!-- goal checker 가 2개(general / parking)라 어느 것을 쓸지 지정해야 한다.
+             지정하지 않으면 controller_server 가 이렇게 죽는다:
+               FollowPath called with goal_checker name '' ... does not exist
+             토픽으로 런타임 전환이 되므로 3주차 후진 주차에서
+             parking_goal_checker(xy 0.12 / yaw 0.06) 로 바꿔 쓰면 된다:
+               ros2 topic pub -1 /goal_checker_selector std_msgs/msg/String                  "{data: parking_goal_checker}" -->
+        <GoalCheckerSelector selected_goal_checker="{selected_goal_checker}" default_goal_checker="general_goal_checker" topic_name="goal_checker_selector"/>
+        <RateController hz="1.0">
+          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="{selected_planner}" error_code_id="{compute_path_error_code}"/>
+            <Sequence>
+              <WouldAPlannerRecoveryHelp error_code="{compute_path_error_code}"/>
+              <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
+            </Sequence>
+          </RecoveryNode>
+        </RateController>
+        <RecoveryNode number_of_retries="1" name="FollowPath">
+          <FollowPath path="{path}" controller_id="{selected_controller}" goal_checker_id="{selected_goal_checker}" error_code_id="{follow_path_error_code}"/>
+          <Sequence>
+            <WouldAControllerRecoveryHelp error_code="{follow_path_error_code}"/>
+            <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
+          </Sequence>
+        </RecoveryNode>
+      </PipelineSequence>
+      <Sequence>
+        <Fallback>
+          <WouldAControllerRecoveryHelp error_code="{follow_path_error_code}"/>
+          <WouldAPlannerRecoveryHelp error_code="{compute_path_error_code}"/>
+        </Fallback>
+        <ReactiveFallback name="RecoveryFallback">
+          <GoalUpdated/>
+          <RoundRobin name="RecoveryActions">
+            <Sequence name="ClearingActions">
+              <ClearEntireCostmap name="ClearLocalCostmap-Subtree" service_name="local_costmap/clear_entirely_local_costmap"/>
+              <ClearEntireCostmap name="ClearGlobalCostmap-Subtree" service_name="global_costmap/clear_entirely_global_costmap"/>
+            </Sequence>
+            <BackUp backup_dist="0.60" backup_speed="0.25" error_code_id="{backup_code_id}"/>
+            <Wait wait_duration="5.0"/>
+            <DriveOnHeading dist_to_travel="0.40" speed="0.25" error_code_id="{drive_on_heading_error_code}"/>
+          </RoundRobin>
+        </ReactiveFallback>
+      </Sequence>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>
