@@ -18,6 +18,7 @@ install(PROGRAMS
   scripts/ackermann_teleop_key.py
   tools/check_model.py
   tools/smoke_probe.py
+  tools/preview_model.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

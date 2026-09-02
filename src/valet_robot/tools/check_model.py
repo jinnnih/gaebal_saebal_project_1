@@ -156,70 +156,86 @@ def check_kinematics(joints, absxyz):
     return wheelbase, track, steer_limit, r_achievable
 
 
-def check_body(links, absxyz, wheelbase, max_steer):
-    head('3. 차체 치수와 링크 간섭')
+def check_body(links, absxyz, wheelbase, track, steer_limit):
+    head('3. 차체 치수와 바퀴 간섭')
     boxes = []
     for name, l in links.items():
+        if 'wheel' in name:
+            continue
         for e in l.findall('collision'):
             b = e.find('geometry/box')
             if b is None:
                 continue
-            s = [float(v) for v in b.get('size').split()]
+            sz = [float(v) for v in b.get('size').split()]
             o, a = origin(e), absxyz[name]
-            boxes.append((name, [a[i] + o[i] for i in range(3)], s))
+            boxes.append((e.get('name') or name,
+                          [a[i] + o[i] for i in range(3)], sz))
     xmax = max(c[0] + s[0] / 2 for _, c, s in boxes)
     xmin = min(c[0] - s[0] / 2 for _, c, s in boxes)
     ymax = max(c[1] + s[1] / 2 for _, c, s in boxes)
     ymin = min(c[1] - s[1] / 2 for _, c, s in boxes)
+    zmax = max(c[2] + s[2] / 2 for _, c, s in boxes)
     length, width = xmax - xmin, ymax - ymin
-    print('  전장 %.3f m | 전폭 %.3f m' % (length, width))
+    print('  전장 %.3f m | 전폭 %.3f m | 전고 %.3f m (충돌 형상 기준)'
+          % (length, width, zmax))
+    print('  차체 충돌 박스 %d 개' % len(boxes))
     if abs(xmax + xmin) < 1e-6:
         ok('base_link 가 차체 중심 (앞/뒤 오버행 각 %.2f m)'
            % (xmax - wheelbase / 2))
     else:
         bad('차체가 base_link 기준 비대칭 — 주차면 중심 goal_pose 와 안 맞는다')
 
-    deck = max(boxes, key=lambda b: b[2][1])
-    deck_bottom = deck[1][2] - deck[2][2] / 2
-    deck_top = deck[1][2] + deck[2][2] / 2
-    wheel_top = absxyz['front_left_wheel_link'][2] + WHEEL_R
-    if deck_bottom > wheel_top:
-        ok('데크 하단(%.3f) > 바퀴 상단(%.3f), 여유 %.3f m'
-           % (deck_bottom, wheel_top, deck_bottom - wheel_top))
-    else:
-        bad('데크가 바퀴와 z 로 겹침')
+    def wheel_aabb(name):
+        a = absxyz[name]
+        st = steer_limit if 'front' in name else 0.0
+        ex = WHEEL_R * math.cos(st) + WHEEL_W / 2 * math.sin(st)
+        ey = WHEEL_R * math.sin(st) + WHEEL_W / 2 * math.cos(st)
+        return (a[0] - ex, a[0] + ex, a[1] - ey, a[1] + ey,
+                a[2] - WHEEL_R, a[2] + WHEEL_R)
 
-    chassis = min(boxes, key=lambda b: b[2][1])
-    wheel_inner = abs(absxyz['front_left_wheel_link'][1]) - WHEEL_W / 2
-    if chassis[2][1] / 2 < wheel_inner:
-        ok('섀시 반폭(%.3f) < 앞바퀴 안쪽끝(%.3f), 자기충돌 없음'
-           % (chassis[2][1] / 2, wheel_inner))
+    hits = []
+    for wn in [n for n in links if n.endswith('wheel_link')]:
+        wx0, wx1, wy0, wy1, wz0, wz1 = wheel_aabb(wn)
+        for bn, c, s in boxes:
+            ox = min(c[0] + s[0] / 2, wx1) - max(c[0] - s[0] / 2, wx0)
+            oy = min(c[1] + s[1] / 2, wy1) - max(c[1] - s[1] / 2, wy0)
+            oz = min(c[2] + s[2] / 2, wz1) - max(c[2] - s[2] / 2, wz0)
+            if ox > 1e-9 and oy > 1e-9 and oz > 1e-9:
+                hits.append((wn, bn, ox, oy, oz))
+    if hits:
+        for wn, bn, ox, oy, oz in hits[:4]:
+            bad('%s 가 %s 와 겹침 (x %.3f y %.3f z %.3f)' % (bn, wn, ox, oy, oz))
     else:
-        bad('섀시가 앞바퀴와 겹침. 앞바퀴는 base_link 와 직접 조인트가 아니라 '
-            '자기충돌이 실제로 발생한다')
+        ok('전 바퀴(최대조향 포락선 포함)가 차체와 안 겹침 — 휠아치 확보')
 
     steer_out = (abs(absxyz['front_left_wheel_link'][1])
-                 + WHEEL_R * math.sin(max_steer)
-                 + WHEEL_W / 2 * math.cos(max_steer))
+                 + WHEEL_R * math.sin(steer_limit)
+                 + WHEEL_W / 2 * math.cos(steer_limit))
     print('  최대조향 시 앞바퀴 바깥끝 y = %.4f m' % steer_out)
-    return length, width, deck_top, steer_out
+    return length, width, zmax, steer_out
 
 
-def check_lidar(absxyz, deck_top):
+def check_lidar(absxyz, roof_top):
     head('4. 라이다 장착 높이')
+    if 'lidar_link' not in absxyz:
+        print('  라이다 없음 (lidar:=false) — 건너뜀')
+        return
     lz = absxyz['lidar_link'][2]
-    print('  절대 높이 %.3f m' % lz)
+    print('  절대 높이 %.3f m  (자기 차체 최상단 %.3f m)' % (lz, roof_top))
     for name, low, high in WORLD_OBSTACLES:
         print('    %-16s %.2f ~ %.2f m  ->  %s'
               % (name, low, high, '감지' if low < lz < high else '통과(미감지)'))
     if 0.27 < lz < 0.99:
-        ok('주차 차량을 라이다로 본다 (obstacle_layer 가 동적 장애물로 처리)')
+        ok('주차 차량을 "차체"(4.4 x 1.8)로 본다 — 외형 정확도 최상')
+    elif 0.99 < lz < 1.51:
+        ok('주차 차량을 "캐빈"(2.2 x 1.66)으로 본다 — 빈 주차면 탐색에는 충분')
+        print('         ! 차량 외형을 앞뒤로 약 1.1 m 씩 작게 본다')
     else:
-        bad('주차 차량 차체(0.27~0.99 m)를 못 본다 — 빈 주차면 탐색이 무의미해진다')
-    if lz > deck_top:
-        ok('자기 데크 상단(%.3f) 위 — 자기가림 없음' % deck_top)
+        bad('주차 차량을 전혀 못 본다 — 빈 주차면 탐색이 무의미해진다')
+    if lz > roof_top:
+        ok('자기 차체 최상단(%.3f) 위 — 360도 자기가림 없음' % roof_top)
     else:
-        bad('라이다가 자기 데크에 가린다')
+        bad('라이다가 자기 차체(%.3f)에 가린다' % roof_top)
 
 
 def check_inertia(links):
@@ -341,9 +357,9 @@ def main():
     root = ET.fromstring(expand(xacro_file))
     links, joints, absxyz = build_tree(root)
     wheelbase, track, steer_limit, r_achievable = check_kinematics(joints, absxyz)
-    length, width, deck_top, steer_out = check_body(links, absxyz,
-                                                    wheelbase, steer_limit)
-    check_lidar(absxyz, deck_top)
+    length, width, roof_top, steer_out = check_body(
+        links, absxyz, wheelbase, track, steer_limit)
+    check_lidar(absxyz, roof_top)
     check_inertia(links)
     check_ros2_control(root)
     check_map_pkg(length, width, wheelbase, track, steer_limit,

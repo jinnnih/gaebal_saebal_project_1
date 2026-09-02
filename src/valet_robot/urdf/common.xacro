@@ -32,35 +32,83 @@
   <xacro:property name="steer_limit"
                   value="${1.05*atan(wheelbase/(min_turn_radius - track/2))}"/>
 
-  <!-- ===== 2. 차체 형상 ================================================ -->
+  <!-- ===== 2. 차체 형상 (실차 세단 프로파일) ======================== -->
   <!-- base_link 는 "차체 중심"(앞뒤 오버행 각 1.00 m). 후륜축이 아니다.
        근거: nav2_ackermann.yaml footprint 가 [+-2.30, +-1.00] 대칭이고
              parking_spots.yaml 의 goal_pose 가 주차면 중심이기 때문. -->
   <xacro:property name="base_z"       value="${wheel_radius}"/>  <!-- 지면->base_link -->
 
-  <!-- 하부 섀시: 바퀴(안쪽끝 y=0.59)와 간섭하지 않도록 폭 1.10 -->
-  <xacro:property name="chassis_len"  value="4.20"/>
-  <xacro:property name="chassis_w"    value="1.10"/>
-  <xacro:property name="chassis_h"    value="0.42"/>
-  <xacro:property name="chassis_cz"   value="0.12"/>   <!-- base_link 기준, 절대 0.45 -->
+  <!-- 실차 세단 측면 프로파일 (절대 높이, m)
+         0.00          지면
+         0.24 ~ 0.66   로커/플로어팬 · 범퍼      바퀴가 드나드는 높이
+         0.68 ~ 1.00   벨트라인(펜더)            바퀴 위를 덮는 전폭 부위
+         0.98 ~ 1.06   보닛 / 트렁크 리드
+         1.02 ~ 1.30   캐빈(그린하우스) + 유리
+         1.30 ~ 1.34   루프 패널
+         1.34 ~ 1.39   센서 포드
+         1.42          라이다 스캔 평면          <- 아래 3장 참고
+       전고 1.445 m — 쏘나타(1.445) / 캠리(1.455) 급 -->
 
-  <!-- 상부 데크: 전장/전폭을 담당. 바퀴 상단(절대 0.66)보다 0.02 위에서 시작 -->
-  <xacro:property name="deck_len"     value="${body_length}"/>
-  <xacro:property name="deck_w"       value="${body_width}"/>
-  <xacro:property name="deck_h"       value="0.14"/>
-  <xacro:property name="deck_cz"      value="0.42"/>   <!-- 절대 0.75, 상단 0.82 -->
+  <!-- 하부: 바퀴가 들어갈 자리를 비워 휠아치를 만든다.
+       플로어팬은 축 사이(x +-0.92)만 전폭으로 두고, 바퀴 x 구간은 비운다.
+       최대조향(43도) 시 앞바퀴 x 는 0.934~1.566 이므로 6 cm 이상 여유. -->
+  <xacro:property name="pan_len"      value="1.84"/>   <!-- x +-0.92 -->
+  <xacro:property name="pan_w"        value="${body_width}"/>
+  <xacro:property name="pan_h"        value="0.42"/>
+  <xacro:property name="pan_cz"       value="0.12"/>   <!-- 절대 0.45 -->
+
+  <xacro:property name="fascia_len"   value="0.62"/>   <!-- 범퍼 블록 -->
+  <xacro:property name="fascia_w"     value="1.86"/>
+  <xacro:property name="fascia_cx"    value="1.94"/>   <!-- x 1.63~2.25 -->
+
+  <!-- 벨트라인: 전장/전폭을 정의하는 형상. 바퀴 상단(0.66)보다 0.02 위.
+       앞머리를 낮추려고 캐빈/후방(1.00)과 보닛부(0.94)를 나눠 놓았다. -->
+  <xacro:property name="beltr_len"    value="3.15"/>   <!-- x -2.25~0.90 -->
+  <xacro:property name="beltr_cx"     value="-0.675"/>
+  <xacro:property name="beltr_h"      value="0.32"/>
+  <xacro:property name="beltr_cz"     value="0.51"/>   <!-- 절대 0.68~1.00 -->
+
+  <xacro:property name="beltf_len"    value="1.35"/>   <!-- x 0.90~2.25 -->
+  <xacro:property name="beltf_cx"     value="1.575"/>
+  <xacro:property name="beltf_h"      value="0.26"/>
+  <xacro:property name="beltf_cz"     value="0.48"/>   <!-- 절대 0.68~0.94 -->
+
+  <!-- 보닛: 카울(0.96)에서 노즈(0.90)로 내려가는 경사판 -->
+  <xacro:property name="hood_len"     value="1.36"/>
+  <xacro:property name="hood_cx"      value="1.56"/>
+  <xacro:property name="hood_cz"      value="0.60"/>   <!-- 절대 0.93 -->
+  <xacro:property name="hood_pitch"   value="0.0441"/>
+
+  <xacro:property name="trunk_len"    value="1.02"/>
+  <xacro:property name="trunk_cx"     value="-1.73"/>
+  <xacro:property name="lid_w"        value="1.80"/>
+  <xacro:property name="lid_h"        value="0.08"/>
+  <xacro:property name="lid_cz"       value="0.69"/>   <!-- 절대 0.98~1.06 -->
+
+  <xacro:property name="cabin_len"    value="1.25"/>
+  <xacro:property name="cabin_w"      value="1.72"/>
+  <xacro:property name="cabin_h"      value="0.28"/>
+  <xacro:property name="cabin_cx"     value="-0.325"/> <!-- x -0.95~0.30 -->
+  <xacro:property name="cabin_cz"     value="0.83"/>   <!-- 절대 1.02~1.30 -->
+
+  <xacro:property name="roof_cz"      value="0.99"/>   <!-- 절대 1.30~1.34 -->
+  <xacro:property name="pod_cz"       value="1.035"/>  <!-- 절대 1.34~1.39 -->
 
   <!-- ===== 3. 센서 장착 높이 (주차장 월드 기하로부터 역산) ==============
-       parked_car 차체 박스 : z 0.27 ~ 0.99  (폭 1.80)
-       parked_car 캐빈      : z 0.99 ~ 1.51  (폭 1.66)
+       parked_car 차체 박스 : z 0.27 ~ 0.99  (폭 1.80, 길이 4.40)
+       parked_car 캐빈      : z 0.99 ~ 1.51  (폭 1.66, 길이 2.20)
        벽/기둥 2.60 · EV충전기 1.30 · 게이트 1.20 · 라바콘 0.59
 
-       라이다를 지붕(1.6 m)에 올리면 주차 차량 위를 넘어가 obstacle_layer 가
-       주차 차량을 못 본다. 반대로 자차 데크(0.82) 보다는 위여야 자기 몸에 가린다.
-       -> 절대 0.92 m. 주차 차량 "차체"를 때리고 자차 데크는 넘어간다.
-       라바콘(0.59)은 못 보지만 정적 맵(parking_lot.pgm)에 이미 들어있다. -->
-  <xacro:property name="lidar_z"      value="0.59"/>   <!-- 절대 0.92 -->
-  <xacro:property name="mast_cz"      value="0.52"/>   <!-- 절대 0.85 -->
+       실차 형상이면 자기 지붕(1.34)보다 위에 달아야 360도가 가려지지 않는다.
+       그러면서도 주차 차량을 봐야 하는데, 1.34 위에서 주차 차량이 있는 높이는
+       "캐빈 대역 0.99~1.51" 뿐이다. -> 1.42 m (캐빈 상단까지 9 cm 여유)
+
+       트레이드오프: 이 높이에서는 주차 차량이 차체(4.4 x 1.8)가 아니라
+       캐빈(2.2 x 1.66)으로 보인다. 빈 주차면 탐색에는 충분하지만 차량 외형을
+       실제보다 작게 본다. 라바콘/게이트/충전기는 못 보지만 전부 정적 맵에 있다.
+       (풀 차체를 보려면 범퍼 장착 0.55 m + FOV 제한이 필요한데, 이 GL 스택은
+        gpu_lidar 를 하나만 렌더링해서 전/후방 2개 구성이 불가능하다) -->
+  <xacro:property name="lidar_z"      value="1.09"/>   <!-- 절대 1.42 -->
   <xacro:property name="imu_z"        value="0.05"/>
 
   <!-- ===== 4. 질량 ===================================================== -->
@@ -95,11 +143,14 @@
   </xacro:macro>
 
   <!-- ===== 7. 재질 ===================================================== -->
-  <material name="valet_deck">   <color rgba="0.93 0.45 0.10 1.0"/></material>
-  <material name="valet_body">   <color rgba="0.20 0.22 0.26 1.0"/></material>
-  <material name="valet_rubber"> <color rgba="0.07 0.07 0.08 1.0"/></material>
-  <material name="valet_metal">  <color rgba="0.55 0.57 0.60 1.0"/></material>
-  <material name="valet_sensor"> <color rgba="0.10 0.60 0.85 1.0"/></material>
-  <material name="valet_front">  <color rgba="0.95 0.90 0.30 1.0"/></material>
+  <material name="valet_body">   <color rgba="0.72 0.16 0.14 1.0"/></material>  <!-- 차체색 -->
+  <material name="valet_glass">  <color rgba="0.10 0.13 0.17 0.85"/></material> <!-- 유리 -->
+  <material name="valet_dark">   <color rgba="0.07 0.07 0.08 1.0"/></material>  <!-- 그릴/미러 -->
+  <material name="valet_rubber"> <color rgba="0.06 0.06 0.07 1.0"/></material>  <!-- 타이어 -->
+  <material name="valet_rim">    <color rgba="0.72 0.74 0.78 1.0"/></material>  <!-- 휠 -->
+  <material name="valet_metal">  <color rgba="0.45 0.47 0.50 1.0"/></material>  <!-- 센서 포드 -->
+  <material name="valet_sensor"> <color rgba="0.10 0.60 0.85 1.0"/></material>  <!-- 라이다 -->
+  <material name="valet_light">  <color rgba="0.98 0.96 0.82 1.0"/></material>  <!-- 헤드램프 -->
+  <material name="valet_tail">   <color rgba="0.85 0.10 0.10 1.0"/></material>  <!-- 테일램프 -->
 
 </robot>

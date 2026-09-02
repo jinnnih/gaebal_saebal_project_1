@@ -31,6 +31,7 @@ def generate_launch_description():
     world = LaunchConfiguration('world')
     use_rviz = LaunchConfiguration('rviz')
     use_nav2 = LaunchConfiguration('nav2')
+    use_lidar = LaunchConfiguration('lidar')
     x = LaunchConfiguration('x')
     y = LaunchConfiguration('y')
     yaw = LaunchConfiguration('yaw')
@@ -49,7 +50,7 @@ def generate_launch_description():
             PythonLaunchDescriptionSource(
                 os.path.join(robot_pkg, 'launch', 'spawn_valet_car.launch.py')),
             launch_arguments={'x': x, 'y': y, 'yaw': yaw,
-                              'rviz': use_rviz,
+                              'rviz': use_rviz, 'lidar': use_lidar,
                               'cmd_vel_topic': cmd_vel_topic}.items())])
 
     nav2 = TimerAction(period=12.0, actions=[
@@ -66,6 +67,7 @@ def generate_launch_description():
             description='SDF 월드 경로'),
         DeclareLaunchArgument('rviz', default_value='false'),
         DeclareLaunchArgument('nav2', default_value='false'),
+        DeclareLaunchArgument('lidar', default_value='true'),
         DeclareLaunchArgument('x', default_value='-23.00'),
         DeclareLaunchArgument('y', default_value='-18.30'),
         DeclareLaunchArgument('yaw', default_value='0.0'),

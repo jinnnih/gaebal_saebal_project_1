@@ -15,11 +15,11 @@
         <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
         <material name="valet_rubber"/>
       </visual>
-      <!-- 휠 디스크 (방향 식별용, 충돌 없음) -->
+      <!-- 휠(림). 타이어 안쪽에 살짝 작게 -->
       <visual>
         <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
-        <geometry><cylinder radius="${wheel_radius*0.55}" length="${wheel_width*1.06}"/></geometry>
-        <material name="valet_metal"/>
+        <geometry><cylinder radius="${wheel_radius*0.62}" length="${wheel_width*1.04}"/></geometry>
+        <material name="valet_rim"/>
       </visual>
       <collision>
         <origin xyz="0 0 0" rpy="${pi/2} 0 0"/>
@@ -37,8 +37,8 @@
     <link name="front_${side}_steer_link">
       <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry><box size="0.14 0.10 0.26"/></geometry>
-        <material name="valet_metal"/>
+        <geometry><box size="0.12 0.09 0.24"/></geometry>
+        <material name="valet_dark"/>
       </visual>
       <xacro:box_inertia m="${knuckle_mass}" x="0.14" y="0.10" z="0.26">
         <origin xyz="0 0 0" rpy="0 0 0"/>

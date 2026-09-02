@@ -192,8 +192,10 @@ def main():
         '이동 %.2f m (기대 5~9), 방향변화 %.1f deg' % (dist, dyaw))
 
     # ---- D. 선회 (최소 회전반경) ----
-    n.reset(-12.0, 0.0, 0.0)
-    a, b = n.drive(1.0, 1.0 / R_MIN, 14.0)
+    # Aisle_C 는 폭 8 m (y -4~+4) 인데 최소회전반경 원의 지름이 7.6 m 라
+    # 한 바퀴가 안 들어간다. 남쪽에서 시작해 90도만 돌고 끝낸다.
+    n.reset(-12.0, -2.0, 0.0)
+    a, b = n.drive(1.0, 1.0 / R_MIN, 7.0)
     fl, fr = n.steer_at_end          # 정지 전 값 (정지하면 0 으로 돌아간다)
     dist = math.hypot(b[0] - a[0], b[1] - a[1])
     dyaw = b[2] - a[2]
@@ -235,14 +237,14 @@ def main():
         '이동 %.3f m, 회전 %.2f deg (둘 다 ~0 이어야 함)' % (moved, turned))
 
     # ---- H. 각속도 클램프 ----
-    n.reset(-12.0, 0.0, 0.0)
-    a, b = n.drive(1.0, 2.0, 8.0)
+    n.reset(-12.0, -2.0, 0.0)
+    a, b = n.drive(1.0, 2.0, 6.0)
     dyaw = b[2] - a[2]
     while dyaw > math.pi:
         dyaw -= 2 * math.pi
     while dyaw < -math.pi:
         dyaw += 2 * math.pi
-    w = abs(dyaw) / 8.0
+    w = abs(dyaw) / 6.0
     limit = 1.0 / R_MIN
     rec('H. |w| <= vx/R_min 클램프', w < limit * 1.35,
         '실측 %.3f rad/s, 상한 %.3f (요청 2.0)' % (w, limit))
