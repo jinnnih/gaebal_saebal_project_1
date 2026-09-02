@@ -14,6 +14,7 @@ PATS=(
   'ros2[_]control_node'
   'controller[_]manager'
   'smoke[_]probe'
+  'demo[_]drive'
 )
 for p in "${PATS[@]}"; do pkill -f "$p" 2>/dev/null; done
 sleep 2
