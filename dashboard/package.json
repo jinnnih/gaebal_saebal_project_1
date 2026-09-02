@@ -1,15 +1,21 @@
 {
   "name": "valet-dashboard",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
-  "description": "차량형 로봇 자율 발렛파킹 — 관제 대시보드 백엔드",
+  "description": "차량형 로봇 자율 발렛파킹 — 관제 대시보드 (React + Express + MySQL)",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "engines": {
-    "node": ">=22.5.0"
+    "node": ">=22.6.0"
   },
   "scripts": {
+    "dev:api": "npm run dev --workspace=backend",
+    "dev:web": "npm run dev --workspace=frontend",
+    "db:schema": "mysql --defaults-group-suffix=valet < db/schema.sql",
     "db:seed": "node db/seed.ts",
-    "db:reset": "rm -f data/valet.db data/valet.db-wal data/valet.db-shm && node db/seed.ts",
-    "db:shell": "sqlite3 data/valet.db"
+    "build": "npm run build --workspace=frontend"
   }
 }

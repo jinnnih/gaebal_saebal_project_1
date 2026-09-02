@@ -2,10 +2,16 @@
   "version": "0.0.1",
   "configurations": [
     {
-      "name": "dashboard",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["dashboard/src/server.ts"],
+      "name": "dashboard-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace=frontend", "--prefix", "dashboard"],
       "port": 5173
+    },
+    {
+      "name": "dashboard-api",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--workspace=backend", "--prefix", "dashboard"],
+      "port": 5174
     }
   ]
 }
