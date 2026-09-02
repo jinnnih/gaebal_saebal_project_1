@@ -8,6 +8,7 @@
 import express from 'express';
 import { pool, currentLotVersion } from './db.ts';
 import { layoutJson, layoutSource } from './layout.ts';
+import { publishRequest, startCollector } from './collector.ts';
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 5174);
@@ -69,8 +70,10 @@ app.post('/api/requests', wrap(async (req, res) => {
        VALUES (?, 1, 'REQUEST_ACCEPTED', ?)`,
       [id, JSON.stringify({ vehicle_tag, kind, spot_id })]);
     await conn.commit();
-    // TODO(#9): 여기서 /valet/request 토픽으로 발행. 계약은 확정됐고 발행자만 남았다.
-    res.status(201).json({ id, kind, vehicle_tag, status: 'PENDING' });
+
+    // #9 계약대로 /valet/request 발행. rosbridge 가 없으면 DB 에만 남고 published:false 로 알린다.
+    const published = publishRequest({ request_id: id, kind, vehicle_tag, spot_id });
+    res.status(201).json({ id, kind, vehicle_tag, status: 'PENDING', published });
   } catch (e) {
     await conn.rollback();
     throw e;
@@ -137,8 +140,9 @@ app.get('/api/health', wrap(async (_req, res) => {
   res.json({ ok: true, layout_source: layoutSource });
 }));
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`API      http://localhost:${PORT}`);
   console.log(`레이아웃  ${layoutSource}`);
   console.log(`DB       ${process.env.DB_USER ?? 'valet'}@${process.env.DB_HOST ?? '127.0.0.1'}/${process.env.DB_NAME ?? 'valet'}`);
+  await startCollector();
 });

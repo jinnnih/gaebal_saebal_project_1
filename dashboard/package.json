@@ -14,8 +14,9 @@
   "scripts": {
     "dev:api": "npm run dev --workspace=backend",
     "dev:web": "npm run dev --workspace=frontend",
+    "mock:ros": "node tools/mock_rosbridge.ts",
     "db:schema": "mysql --defaults-group-suffix=valet < db/schema.sql",
-    "db:seed": "node db/seed.ts",
+    "db:seed": "node --env-file=.env db/seed.ts",
     "build": "npm run build --workspace=frontend"
   }
 }

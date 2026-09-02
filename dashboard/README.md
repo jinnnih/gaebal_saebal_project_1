@@ -120,6 +120,32 @@ goal checker 허용오차 **0.12 m** 를 그대로 반영한다.
 
 ---
 
+## ROS 없이 전체 흐름 돌려보기
+
+로봇 쪽에 주차면 관리 노드와 BT 노드가 아직 없어서 `/valet/spot_states` 와
+`/valet/mission_status` 는 발행자가 없다(#9 규석 답변). 그래서 계약대로만 말하는
+목 rosbridge 를 넣어뒀다.
+
+```bash
+npm run mock:ros     # 터미널 3 — ws://127.0.0.1:9090
+```
+
+띄운 상태에서 대시보드에서 입차 요청을 넣으면 이렇게 돈다.
+
+```
+브라우저 → POST /api/requests → /valet/request 발행
+        → 목이 주차 시나리오 재생 (REQUEST_ACCEPTED … PARK_DONE)
+        → /valet/mission_status 발행 → 수집기가 mission_event 적재
+        → PARK_DONE 이면 park_metric 산출 → 화면 갱신
+```
+
+목은 확정된 계약대로만 말하므로, 규석의 실제 노드가 올라오면
+`ROSBRIDGE_URL` 만 VM 주소로 바꾸면 된다. 수집기는 그대로다.
+
+```bash
+ROSBRIDGE_URL=ws://172.30.1.11:9090 npm run dev:api
+```
+
 ## 아직 안 된 것
 
 로봇 쪽에 주차면 관리 노드와 BT 노드가 없어서 `/valet/spot_states` 와
@@ -128,7 +154,8 @@ goal checker 허용오차 **0.12 m** 를 그대로 반영한다.
 
 계약이 확정돼 있으므로 실제 노드가 붙을 때 바꿀 것은 수집기 한 겹뿐이다.
 
-- [ ] rosbridge WebSocket 수집기 (`mission_event` / `spot_state` 적재)
-- [ ] `POST /api/requests` 에서 `/valet/request` 토픽 발행
-- [ ] 로봇 위치 오버레이 (`/amcl_pose`)
+- [x] rosbridge WebSocket 수집기 (`mission_event` / `spot_state` 적재) — `backend/src/collector.ts`
+- [x] `POST /api/requests` 에서 `/valet/request` 토픽 발행
+- [ ] 로봇 위치 오버레이 (`/amcl_pose`) — 2주차 Nav2 이후
 - [ ] 폴링을 WebSocket 구독으로 교체
+- [ ] 실제 rosbridge 연동 검증 — 규석의 주차면 관리 노드 대기
