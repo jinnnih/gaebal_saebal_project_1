@@ -16,7 +16,11 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 
 GX = float(sys.argv[1]) if len(sys.argv) > 1 else -10.0
-GY = float(sys.argv[2]) if len(sys.argv) > 2 else -18.3
+GY = float(sys.argv[2]) if len(sys.argv) > 2 else -19.3
+# ! 기본 180 s 는 짧다. 속도 필터가 통로를 0.5 m/s 로 묶어서
+#   38 m 코너 경유가 93~162 s 걸린다. 목표 1.08 m 앞에서 잘린 적이 있다.
+#   네번째 인자로 덮어쓸 수 있다.
+LIMIT = float(sys.argv[4]) if len(sys.argv) > 4 else 360.0
 GYAW = math.radians(float(sys.argv[3])) if len(sys.argv) > 3 else 0.0
 
 
@@ -86,8 +90,9 @@ def main():
                 d = math.hypot(GX - p.position.x, GY - p.position.y)
                 print('  t=%4.0fs  위치 (%7.2f, %7.2f)  목표까지 %5.2f m  [%s]'
                       % (el, p.position.x, p.position.y, d, src))
-        if el > 180:
-            print('  180 s 초과 — 취소'); ac._cancel_goal_async(gh); break
+        if el > LIMIT:
+            print('  %d s 초과 — 취소' % LIMIT)
+            ac._cancel_goal_async(gh); break
 
     el = time.time() - t_start
     res = rf.result() if rf.done() else None

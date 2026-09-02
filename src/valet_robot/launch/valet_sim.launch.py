@@ -75,7 +75,7 @@ def generate_launch_description():
         # 꺼야 한다 (ParkManeuver 진입 직전) — 이슈 #7.
         DeclareLaunchArgument('use_costmap_filters', default_value='false'),
         DeclareLaunchArgument('x', default_value='-23.00'),
-        DeclareLaunchArgument('y', default_value='-18.30'),
+        DeclareLaunchArgument('y', default_value='-19.30'),
         DeclareLaunchArgument('yaw', default_value='0.0'),
         world,
         robot,

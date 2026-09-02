@@ -317,7 +317,7 @@ RViz 의 **2D Goal Pose** 로 목표를 찍으면 Smac Hybrid-A* 가 후진 포�
 기본값은 `parking_lot_world` README 의 입구 진입 직후 지점이다.
 
 ```bash
-ros2 launch valet_robot valet_sim.launch.py x:=-23.00 y:=-18.30 yaw:=0.0
+ros2 launch valet_robot valet_sim.launch.py x:=-23.00 y:=-19.30 yaw:=0.0
 ```
 
 `x`/`y`/`yaw` 는 **차체 중심(base_link)** 기준이다(후륜축이 아님).

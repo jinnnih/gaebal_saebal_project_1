@@ -49,9 +49,28 @@ def S(v):
 # ===========================================================================
 STALL_W = S(2.50)   # 주차면 폭
 STALL_D = S(5.40)   # 주차면 깊이 (뒤쪽 기둥 여유 포함)
-AISLE_SIDE = S(7.00)   # 남/북 외곽 통로 폭
-AISLE_CENTER = S(8.00)   # 중앙 통로 폭 (B/C 열 공용, 회전 여유)
-LANE_W = S(7.00)   # 동/서 연결 차로 폭
+# ! 통로 폭은 임의 값이 아니다. 2026-09-02 실측으로 다음과 같이 정했다.
+#
+#   기존(AISLE_SIDE 7.0 / AISLE_CENTER 8.0 / LANE_W 7.0)에서는
+#   남북 연결차로 순폭이 7.30 m 였고, 풋프린트 내접원(0.95)을 양쪽에서 빼면
+#   차체 중심이 다닐 수 있는 폭이 5.40 m,
+#   inflation_radius(2.60)를 빼면 무비용 밴드가 2.10 m 밖에 안 남았다.
+#   전장 4.5 m 차량의 MPPI 추종 오차가 0.5~1.6 m 라 이 밴드를 벗어나고,
+#   차체가 keepout 에 걸치는 순간 플래너가 "Start occupied" 로 재계획을 거부해
+#   코너 경유 장거리 목표가 전부 실패했다. (같은 통로 목표는 성공)
+#
+#   MPPI 파라미터 튜닝(vx_max/wz_std/critic/inflation)으로는 실패까지 버티는
+#   시간이 18 s -> 51 s 로 늘었을 뿐 해결되지 않았다. 기하 자체가 원인이다.
+#
+#   넓힌 뒤: 연결차로 순폭 9.30 m, 중심 주행밴드 7.40 m, 무비용 밴드 4.10 m.
+#   90도 선회에 필요한 폭은 R_min + 반차폭 = 3.57 + 0.95 = 4.52 m 이므로
+#   외곽통로 8.0 / 연결차로 9.3 은 모두 여유가 있다.
+#
+#   부지는 50.0 x 43.6 -> 54.0 x 46.6 m 로 커진다.
+#   주차면 x 좌표는 바뀌지 않지만(-17.5..17.5) y 좌표는 전부 이동한다.
+AISLE_SIDE = S(8.00)   # 남/북 외곽 통로 폭
+AISLE_CENTER = S(9.00)   # 중앙 통로 폭 (B/C 열 공용, 회전 여유)
+LANE_W = S(9.00)   # 동/서 연결 차로 폭
 N_STALLS = 14      # 열당 주차면 수
 
 LINE_W = S(0.12)   # 노면 표시 선 두께
@@ -103,8 +122,18 @@ LANE_E_C = X_MAX - LANE_W / 2.0                # 동측 차로 중심선
 GATE_IN = (LANE_W_C * 0 + AISLE_S_C, X_MIN)   # (y중심, x)
 GATE_OUT = (AISLE_N_C, X_MAX)
 
-START_POSE = (X_MIN + S(2.0), AISLE_S_C, 0.0)          # 입차 시작 지점
-EXIT_POSE = (X_MAX - S(1.5), AISLE_N_C, 0.0)           # 출차 최종 목표
+# ! 게이트에서 최소 4 m 는 안쪽이어야 한다. 2.0 m 였을 때 다음이 났다.
+#   차체 반길이가 2.3 m 라 x=X_MIN+2.0 이면 뒷범퍼가 이미 게이트 밖이다.
+#   목표가 한 번 실패해 BT 가 BackUp(0.60 m) 복구를 돌리면 차가 서벽 쪽으로
+#   밀려 x=-25.8 까지 가고, 그러면 차체 뒤쪽이 맵 밖 미지영역에 들어가
+#   (track_unknown_space=true, allow_unknown=false) 플래너가 탐색을 못 해
+#   "exceeded maximum iterations" 로 실패한다. 복구가 복구를 막는 상태가 된다.
+#   4.0 m 로 넣으면 BackUp 을 세 번 해도 차체가 안쪽에 남는다. (2026-09-02 실측)
+START_POSE = (X_MIN + S(4.0), AISLE_S_C, 0.0)          # 입차 시작 지점
+# 출구도 같은 이유. X_MAX-1.5 면 앞범퍼가 게이트 밖이라, 목표 허용오차(0.35)
+# 안에서도 차체가 게이트 문설주에 걸려 "Start occupied" 가 났다.
+# X_MAX-2.5 면 앞범퍼가 정확히 벽선에 닿는다 = 차체 전체가 안쪽.
+EXIT_POSE = (X_MAX - S(2.5), AISLE_N_C, 0.0)           # 출차 최종 목표
 QUEUE_POSE = (LANE_W_C, AISLE_S_C + S(3.0), math.pi / 2)  # 대기열 지점
 
 # --- 열 메타 ------------------------------------------------------------
@@ -811,7 +840,14 @@ bt_navigator:
 
 controller_server:
   ros__parameters:
-    controller_frequency: 20.0
+    # ! 이 VM 이 실제로 낼 수 있는 주기로 선언한다.
+    #   20.0 으로 두면 실측 중앙값이 13.2 Hz 라 매 사이클이 지각하고
+    #   ("Control loop missed its desired rate" 2869 회) MPPI 웜스타트가
+    #   어긋나 추종이 무너진다. gz sim 이 라이다 소프트웨어 렌더링으로
+    #   1.5 코어를 쓰고 부하평균이 8.6/10 이라 20 Hz 는 애초에 무리다.
+    #   차량 속도 1.0 m/s 에서 12.5 Hz 면 사이클당 8 cm — 충분하다.
+    #   model_dt 는 반드시 1/controller_frequency 와 같아야 한다.
+    controller_frequency: 12.5
     min_x_velocity_threshold: 0.02
     min_theta_velocity_threshold: 0.02
     failure_tolerance: 0.5
@@ -844,9 +880,20 @@ controller_server:
       # 차체 길이보다 충분히 길어야 한다. 60 x 0.05 = 3.0 s (최고속에서 4.8 m,
       # 차체 한 대 길이) 로는 코너를 못 읽고 밖으로 밀려난다.
       # 90 x 0.05 = 4.5 s (7.2 m) 로 늘린다.
-      time_steps: 90
-      model_dt: 0.05
-      batch_size: 2000
+      # ! 연산량 = batch_size x time_steps x iteration_count 이고, 여기에
+      #   consider_footprint 가 곱해진다. 2000 x 90 x 2 로 두면 제어 루프가
+      #   20 Hz 목표에서 중앙값 10 Hz 까지 떨어졌다 (실측, 1249 회 미달).
+      #   제어가 낡으면 추종이 무너지고 차체가 통로 경계로 밀려
+      #   "Optimizer fail to compute path" -> "Controller patience exceeded".
+      # ! model_dt 는 1/controller_frequency(=0.05)와 같아야 한다.
+      #   예측 구간을 벌려 보려고 0.075 로 올렸더니, 웜스타트가 어긋나
+      #   차가 복구행동도 없이 스스로 후진해 게이트 밖 벽으로 박았다.
+      #   구간은 time_steps 로만 조절한다.
+      #   1400 x 40 x 1 = 5.6 만, 기존 36 만 대비 6.4 배 가볍다.
+      #   구간은 40 x 0.08 = 3.2 s 로 그대로 유지된다.
+      time_steps: 40
+      model_dt: 0.08
+      batch_size: 1400
       vx_std: 0.20
       vy_std: 0.0
       # ! wz_std 는 wz_max 보다 작아야 한다.
@@ -856,12 +903,19 @@ controller_server:
       #   (실측: 서통로 직선에서 경로 대비 1.6 m 이탈).
       #   wz_max 의 1/3 수준으로 잡는다.
       wz_std: 0.10
-      vx_max: {VMAX:.2f}
+      # ! 로봇 최대속도(1.60)와 컨트롤러 상한은 다른 값이다.
+      #   1.60 m/s 로는 7 m 통로 90도 코너에서 추종 오차가 0.67 m 까지 벌어져
+      #   차체가 keepout 경계를 넘고, 그러면 플래너가 "Start occupied" 로
+      #   재계획을 거부해 목표가 실패한다. 통로 상한을 1.00 으로 낮춘다.
+      #   (차량 자체는 여전히 1.60 까지 낼 수 있다 — twist_to_ackermann 참고)
+      #   wz_max = vx_max / R_min = 1.00 / 3.5704 = 0.280
+      vx_max: {CVMAX:.2f}
       vx_min: -{VREV:.2f}          # 후진 허용 — 발렛파킹 핵심
       vy_max: 0.0
-      wz_max: {WZMAX:.3f}
-      # RTF 여유가 있어 2 회 반복으로 수렴을 개선한다 (추종 오차 감소)
-      iteration_count: 2
+      wz_max: {CWZMAX:.3f}
+      # ! 1 로 둔다. 2 로 올리면 연산이 배로 늘어 제어 루프가 목표
+      #   주기를 못 맞춘다. 수렴을 더 얻는 것보다 제때 내는 게 낫다.
+      iteration_count: 1
       prune_distance: 6.0
       transform_tolerance: 0.2
       temperature: 0.3
@@ -902,6 +956,13 @@ controller_server:
         # 거부한다. 경계 접근 자체를 강하게 억제한다. 3.81 -> 8.0
         cost_weight: 8.0
         critical_cost: 300.0
+        # ! true 를 유지해야 한다. 전장 4.6 m 차량은 원형 근사가 안 된다.
+        #   false 로 두면 MPPI 가 중심점 비용만 보는데, 앞범퍼가 중심에서
+        #   2.3 m 나 떨어져 있어 "중심은 싼 셀, 앞범퍼는 치명 셀" 인 자세를
+        #   그대로 통과시킨다. 실제로 차 앞이 주차면에 들어가
+        #   "Start occupied" 가 났고, Nav2 도 경고를 낸다:
+        #     "Inconsistent configuration in collision checking"
+        #   대신 batch_size / time_steps 를 줄여 연산량을 맞춘다. 아래 참고.
         consider_footprint: true
         collision_cost: 1000000.0
         near_goal_distance: 1.0
@@ -1022,8 +1083,15 @@ global_costmap:
       # 직사각 풋프린트 — 차량형이므로 원형 근사 금지
       footprint: "[ [{FP_FX:.3f}, {FP_HW:.3f}], [{FP_FX:.3f}, -{FP_HW:.3f}], [{FP_RX:.3f}, -{FP_HW:.3f}], [{FP_RX:.3f}, {FP_HW:.3f}] ]"
       footprint_padding: 0.03
-      plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
-      filters: ["keepout_filter", "speed_filter"]
+      # ! 레이어 순서가 중요하다. keepout 을 filters 로 두면 inflation_layer 가
+      #   이미 끝난 뒤에 마스크가 찍혀서 **주차면 주변에 인플레이션이 생기지 않는다.**
+      #   그러면 통로 비용이 경계 바로 앞까지 0 이라 플래너가 주차면 경계에
+      #   1.2 m 까지 붙는 경로를 내고, 추종 오차가 조금만 나도 풋프린트가
+      #   치명 셀에 닿아 "Start occupied" 로 재계획이 거부된다. (2026-09-02 실측)
+      #   -> keepout 을 plugins 안, inflation_layer 앞에 둔다.
+      #   speed_filter 는 비용을 만들지 않으므로 filters 에 남겨도 된다.
+      plugins: ["static_layer", "obstacle_layer", "keepout_filter", "inflation_layer"]
+      filters: ["speed_filter"]
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: true
@@ -1084,12 +1152,17 @@ local_costmap:
       global_frame: odom
       robot_base_frame: base_link
       rolling_window: true
-      width: 16
-      height: 16
+      # ! 16 m 는 과하다. 320x320 셀을 10 Hz 로 인플레이션(반경 52 셀)하느라
+      #   컨트롤러가 CPU 를 먹는다. MPPI 예측 구간이 3.2 s x 1.0 m/s = 3.2 m
+      #   이므로 +-6 m 면 남는다. 셀 수가 44% 준다.
+      width: 12
+      height: 12
       resolution: {RES:.3f}
       footprint: "[ [{FP_FX:.3f}, {FP_HW:.3f}], [{FP_FX:.3f}, -{FP_HW:.3f}], [{FP_RX:.3f}, -{FP_HW:.3f}], [{FP_RX:.3f}, {FP_HW:.3f}] ]"
       footprint_padding: 0.03
-      plugins: ["obstacle_layer", "inflation_layer"]
+      # ! 로컬에도 keepout 이 필요하다. 없으면 MPPI 의 CostCritic 이
+      #   주차면을 "빈 공간"으로 보고 그쪽으로 밀어낸다.
+      plugins: ["obstacle_layer", "keepout_filter", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
@@ -1102,6 +1175,10 @@ local_costmap:
           data_type: "LaserScan"
           raytrace_max_range: 20.0
           obstacle_max_range: 16.0
+      keepout_filter:
+        plugin: "nav2_costmap_2d::KeepoutFilter"
+        enabled: true
+        filter_info_topic: "/costmap_filter_info"
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         # 로컬도 global 과 같은 이유로 외접원 이상. 위 주석 참고.
@@ -1143,14 +1220,17 @@ def nav2_yaml():
     fp_front = ROBOT_L * 0.5 + S(0.05)
     fp_rear = -(ROBOT_L * 0.5 + S(0.05))
     fp_hw = ROBOT_W * 0.5 + S(0.05)
-    vmax = S(1.60)
+    vmax = S(1.60)          # 차량 능력치 상한 (velocity_smoother 용)
+    cvmax = S(1.00)         # 통로 주행 상한 (MPPI 용). 코너 추종을 위해 낮춤
     vrev = S(0.60)
     wzmax = vmax / ROBOT_MIN_R
+    cwzmax = cvmax / ROBOT_MIN_R   # 최소회전반경과 정합되어야 한다
     return NAV2_YAML.format(
         MIN_R=ROBOT_MIN_R, WB=ROBOT_WHEELBASE,
         STEER_DEG=math.degrees(ROBOT_MAX_STEER),
         START_X=START_POSE[0], START_Y=START_POSE[1], START_YAW=START_POSE[2],
         VMAX=vmax, VREV=vrev, WZMAX=wzmax, RES=MAP_RES,
+        CVMAX=cvmax, CWZMAX=cwzmax,
         FP_FX=fp_front, FP_RX=fp_rear, FP_HW=fp_hw,
     )
 
@@ -1241,9 +1321,21 @@ def main(root):
     write_map_yaml(os.path.join(md, "parking_lot_occupied.yaml"), "parking_lot_occupied.pgm")
     print("  maps/parking_lot_occupied.pgm / .yaml")
 
-    # --- keepout mask: 주차면 내부 + 빗금존 ---
+    # --- keepout mask: 주차장 바깥 + 주차면 내부 + 빗금존 ---
     gk = new_grid(FREE)
     fill_rect(gk, MAP_X0, MAP_Y0, MAP_X1, MAP_Y1, FREE)
+    # ! 벽 바깥과 게이트 목을 먼저 막는다.
+    #   게이트는 벽에 뚫린 개구부라 정적 맵에서 바깥까지 자유공간으로 이어진다.
+    #   그대로 두면 REEDS_SHEPP 플래너가 후진 기동 공간으로 게이트 밖을 쓰고,
+    #   차가 밖으로 나가면 차체 뒤쪽이 맵 밖 미지영역에 걸려
+    #   (track_unknown_space=true, allow_unknown=false) "Start occupied" 로
+    #   재계획이 막힌다. 복구행동도 못 하고 그대로 실패한다. (2026-09-02 실측:
+    #   차가 스스로 후진해 x=-26.1 까지 나갔다)
+    #   입/출구 포즈는 둘 다 주차장 안이라 막아도 잃는 것이 없다.
+    fill_rect(gk, MAP_X0, MAP_Y0, X_MIN, MAP_Y1, OCC)      # 서
+    fill_rect(gk, X_MAX, MAP_Y0, MAP_X1, MAP_Y1, OCC)      # 동
+    fill_rect(gk, MAP_X0, MAP_Y0, MAP_X1, Y_MIN, OCC)      # 남
+    fill_rect(gk, MAP_X0, Y_MAX, MAP_X1, MAP_Y1, OCC)      # 북
     for s in SPOTS:
         # 주차면 안쪽 80% 만 금지 (입구쪽 20% 는 진입 여유로 남김)
         d = (s["y1"] - s["y0"])
@@ -1253,7 +1345,8 @@ def main(root):
             fill_rect(gk, s["x0"], s["y0"] + d * 0.20, s["x1"], s["y1"], OCC)
         else:
             fill_rect(gk, s["x0"], s["y0"], s["x1"], s["y1"] - d * 0.20, OCC)
-    write_pgm(os.path.join(md, "keepout_mask.pgm"), gk, "stall interiors = keepout")
+    write_pgm(os.path.join(md, "keepout_mask.pgm"), gk,
+              "outside lot + stall interiors = keepout")
     write_map_yaml(os.path.join(md, "keepout_mask.yaml"), "keepout_mask.pgm")
     print("  maps/keepout_mask.pgm / .yaml")
 

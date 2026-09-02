@@ -12,14 +12,21 @@ setsid nohup "$WS/scripts/run_sim.sh" nav2:=true use_costmap_filters:=true \
   > /tmp/nav_test.log 2>&1 < /dev/null &
 
 echo "Nav2 활성화 대기 (최대 240 s)..."
-for i in $(seq 1 80); do
-  sleep 3
-  ST=$(timeout 6 ros2 lifecycle get /bt_navigator 2>/dev/null | head -1)
-  case "$ST" in *active*) echo "  준비 완료 ($((i*3)) s)"; break;; esac
+# ! 준비 확인은 로그로 한다. ros2 lifecycle get 을 반복 호출하면 안 된다.
+#   CLI 는 호출마다 DDS 참가자를 새로 만드는데, 노드 20 개가 떠 있고 CPU 가
+#   포화된 상태에서는 한 번에 수 초씩 걸린다. 80 회 돌리면 12 분이 넘어가
+#   바깥 timeout 이 스크립트를 통째로 죽인다. Nav2 는 멀쩡히 떠 있는데도
+#   "활성화 대기" 에서 끝난 것처럼 보인다. (2026-09-02 실측)
+READY=""
+for i in $(seq 1 120); do
+  sleep 2
+  if grep -aq "Activating velocity_smoother" /tmp/nav_test.log 2>/dev/null; then
+    READY=yes; echo "  준비 완료 ($((i*2)) s)"; break
+  fi
 done
-for n in map_server amcl planner_server controller_server bt_navigator velocity_smoother; do
-  printf "  %-18s %s\n" "$n" "$(timeout 6 ros2 lifecycle get /$n 2>/dev/null | head -1)"
-done
+[ -z "$READY" ] && echo "  ! 240 s 안에 활성화 못 함 — 그대로 진행"
+# 상태 조회는 딱 한 번만 (비싸다)
+timeout 30 ros2 lifecycle get -a 2>/dev/null | sed 's/^/  /' | head -14
 sleep 5
 
 echo
