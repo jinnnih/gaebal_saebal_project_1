@@ -10,6 +10,7 @@ import time
 
 import rclpy
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
+from nav_msgs.msg import Odometry
 from nav2_msgs.action import NavigateToPose
 from rclpy.action import ActionClient
 from rclpy.node import Node
@@ -27,6 +28,17 @@ def main():
     amcl = {}
     n.create_subscription(PoseWithCovarianceStamped, '/amcl_pose',
                           lambda m: amcl.__setitem__('p', m), 10)
+    # AMCL 이 안 뜨는 경우를 대비해 odom 도 받아 둔다 (map~odom 오차는 있지만
+    # 결과를 아예 못 찍는 것보다 낫다)
+    odom = {}
+    n.create_subscription(Odometry, '/odom', lambda m: odom.__setitem__('p', m), 10)
+
+    def cur():
+        if 'p' in amcl:
+            return amcl['p'].pose.pose, 'amcl'
+        if 'p' in odom:
+            return odom['p'].pose.pose, 'odom'
+        return None, None
 
     print('AMCL 수렴 대기...')
     t0 = time.time()
@@ -69,24 +81,29 @@ def main():
         el = time.time() - t_start
         if el - last >= 10:
             last = el
-            if 'p' in amcl:
-                p = amcl['p'].pose.pose
+            p, src = cur()
+            if p:
                 d = math.hypot(GX - p.position.x, GY - p.position.y)
-                print('  t=%4.0fs  위치 (%7.2f, %7.2f)  목표까지 %5.2f m'
-                      % (el, p.position.x, p.position.y, d))
+                print('  t=%4.0fs  위치 (%7.2f, %7.2f)  목표까지 %5.2f m  [%s]'
+                      % (el, p.position.x, p.position.y, d, src))
         if el > 180:
             print('  180 s 초과 — 취소'); ac._cancel_goal_async(gh); break
 
     el = time.time() - t_start
     res = rf.result() if rf.done() else None
     code = res.status if res else -1
-    p = amcl.get('p')
-    if p:
-        pp = p.pose.pose
+    STAT = {4: 'SUCCEEDED', 5: 'CANCELED', 6: 'ABORTED'}
+    pp, src = cur()
+    print('')
+    if pp:
         err = math.hypot(GX - pp.position.x, GY - pp.position.y)
-        print('\n  결과 status=%s  소요 %.0f s  최종 (%.2f, %.2f)  목표오차 %.2f m'
-              % (code, el, pp.position.x, pp.position.y, err))
-        print('  판정:', '도달' if err < 0.5 else '미도달')
+        print('  결과 %s  소요 %.0f s  최종 (%.2f, %.2f) [%s]  목표오차 %.2f m'
+              % (STAT.get(code, code), el, pp.position.x, pp.position.y,
+                 src, err))
+        print('  판정:', '도달(Nav2 기준)' if code == 4 else '미도달')
+    else:
+        print('  결과 %s  소요 %.0f s  (위치 소스 없음)'
+              % (STAT.get(code, code), el))
     rclpy.shutdown()
     return 0
 

@@ -840,17 +840,28 @@ controller_server:
 
     FollowPath:
       plugin: "nav2_mppi_controller::MPPIController"
-      time_steps: 60
+      # 전장 4.5 m 차량이 7 m 통로에서 90도 코너를 돌려면 예측 구간이
+      # 차체 길이보다 충분히 길어야 한다. 60 x 0.05 = 3.0 s (최고속에서 4.8 m,
+      # 차체 한 대 길이) 로는 코너를 못 읽고 밖으로 밀려난다.
+      # 90 x 0.05 = 4.5 s (7.2 m) 로 늘린다.
+      time_steps: 90
       model_dt: 0.05
       batch_size: 2000
       vx_std: 0.20
       vy_std: 0.0
-      wz_std: 0.30
+      # ! wz_std 는 wz_max 보다 작아야 한다.
+      #   wz_max 를 0.280 (= vx_max/R_min) 으로 낮췄는데 wz_std 가 0.30 이면
+      #   샘플의 대부분이 실행 불가 영역으로 나가 경계로 클램프된다.
+      #   결과적으로 조향이 bang-bang 이 되어 추종이 나빠진다
+      #   (실측: 서통로 직선에서 경로 대비 1.6 m 이탈).
+      #   wz_max 의 1/3 수준으로 잡는다.
+      wz_std: 0.10
       vx_max: {VMAX:.2f}
       vx_min: -{VREV:.2f}          # 후진 허용 — 발렛파킹 핵심
       vy_max: 0.0
       wz_max: {WZMAX:.3f}
-      iteration_count: 1
+      # RTF 여유가 있어 2 회 반복으로 수렴을 개선한다 (추종 오차 감소)
+      iteration_count: 2
       prune_distance: 6.0
       transform_tolerance: 0.2
       temperature: 0.3
@@ -887,7 +898,9 @@ controller_server:
       CostCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 3.81
+        # keepout 경계를 넘어서면 플래너가 "Start occupied" 로 재계획을
+        # 거부한다. 경계 접근 자체를 강하게 억제한다. 3.81 -> 8.0
+        cost_weight: 8.0
         critical_cost: 300.0
         consider_footprint: true
         collision_cost: 1000000.0
@@ -895,7 +908,8 @@ controller_server:
       PathAlignCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 14.0
+        # 코너에서 경로 이탈이 커 주차행에 차체가 걸쳤다. 14 -> 22.
+        cost_weight: 22.0
         max_path_occupancy_ratio: 0.05
         trajectory_point_step: 4
         threshold_to_consider: 0.5
@@ -904,7 +918,7 @@ controller_server:
       PathFollowCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 5.0
+        cost_weight: 8.0
         offset_from_furthest: 5
         threshold_to_consider: 1.4
       PathAngleCritic:
@@ -937,10 +951,17 @@ planner_server:
       reverse_penalty: 2.1        # 낮출수록 후진 적극 사용 (주차 프로파일 1.3)
       change_penalty: 0.15
       non_straight_penalty: 1.20
-      cost_penalty: 2.0
+      # 통로 중앙 선호도. inflation_radius 를 외접원 이상으로 키워
+      # 통로에 비용 기울기가 생겼으므로 이 값이 실제로 작동한다.
+      cost_penalty: 4.0
       retrospective_penalty: 0.015
       lookup_table_size: 20.0
       cache_obstacle_heuristic: true
+      # ! 스무더는 최소회전반경을 보장하지 않는다. Smac 이 낸 원경로는
+      #   REEDS_SHEPP motion primitive 라 3.5704 m 를 지키지만, 스무더가
+      #   그걸 깨면 MPPI 가 물리적으로 못 따라가 코너에서 이탈한다.
+      #   곡률 측정 결과에 따라 켜고 끈다 (path_check.py 가 재준다).
+      #   끄면 경로가 격자 티가 나 MPPI 추종이 더 나빠질 수 있어 기본은 켠다.
       smooth_path: true
       smoother:
         max_iterations: 1000
@@ -1020,15 +1041,19 @@ global_costmap:
           obstacle_max_range: 25.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        # ! 풋프린트 4.6 x 2.0 기준 내접원 1.03 m / 외접원 2.55 m.
-        #   inflation_radius 가 내접원보다 작으면 "확실히 충돌하는 셀"이
-        #   치명값으로 안 찍혀서 위험하다. Nav2 도 ERROR 를 낸다.
-        #   Smac 은 외접원(2.55) 이상을 권장하지만, 주차면 폭이 2.5 m 라
-        #   그렇게 부풀리면 주차면이 통째로 막힌다. 내접원 + 여유로 잡고,
-        #   대신 cost_scaling_factor 를 키워 비용이 빨리 떨어지게 한다.
-        #   (주차 기동용 프로파일 분리는 5주차 항목)
-        cost_scaling_factor: 4.0
-        inflation_radius: 1.10
+        # ! 풋프린트 4.6 x 2.0 -> 내접원 1.03 m / 외접원 2.55 m.
+        #   외접원(2.55) 이상으로 잡아야 하는 이유가 두 가지 있다.
+        #   1) Smac 이 코스트맵 포텐셜 필드로 충돌검사를 최적화한다.
+        #      작으면 매 포즈마다 전체 풋프린트를 검사해 계획이 느려진다.
+        #   2) 더 중요한 것 — 통로 폭이 7.6 m 인데 인플레이션이 1.10 이면
+        #      통로 중앙부 비용이 전부 0 이라 "중앙을 타라"는 기울기가 없다.
+        #      그래서 경로가 keepout 경계에 0.16 m 까지 붙어 나오고,
+        #      MPPI 추종 오차 0.66 m 가 더해지면 차체가 주차행에 걸쳐
+        #      플래너가 "Start occupied" 로 재계획을 거부한다. (실측)
+        #   부풀려도 주차면이 막히지는 않는다. 내접원(1.03) 안쪽만 치명값이고
+        #   그 바깥은 "비싼 셀"일 뿐이라 계획은 가능하다.
+        cost_scaling_factor: 2.0
+        inflation_radius: 2.60
       # 아래 두 필터는 filter 서버가 떠 있어야 동작한다.
       #   ros2 launch parking_lot_world nav2_valet.launch.py use_costmap_filters:=true
       # keepout: 주차면 내부를 진입금지로 만들어 통로 주행 중 가로지르기를 막는다.
@@ -1045,7 +1070,9 @@ global_costmap:
         filter_info_topic: "/costmap_filter_info"
       speed_filter:
         plugin: "nav2_costmap_2d::SpeedFilter"
-        enabled: false
+        # keepout 과 같은 이유로 설정에서 켠다 (런타임 토글 불가).
+        # 마스크: 통로 직선 100% / 코너·게이트 50% / 주차면 앞 30%
+        enabled: true
         filter_info_topic: "/speed_filter_info"
         speed_limit_topic: "/speed_limit"
 
@@ -1077,9 +1104,9 @@ local_costmap:
           obstacle_max_range: 16.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        # 로컬도 내접원(1.03) 이상이어야 한다. 위 global 주석 참고.
-        cost_scaling_factor: 4.5
-        inflation_radius: 1.10
+        # 로컬도 global 과 같은 이유로 외접원 이상. 위 주석 참고.
+        cost_scaling_factor: 2.5
+        inflation_radius: 2.60
 
 map_server:
   ros__parameters:
