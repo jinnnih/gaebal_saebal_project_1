@@ -58,7 +58,7 @@
       <direction>-0.4 0.3 -0.9</direction>
     </light>
     <light type='point' name='lamp_0_0'>
-      <pose>-18.000 -19.300 2.300 0 0 0</pose>
+      <pose>-19.000 -19.300 2.300 0 0 0</pose>
       <diffuse>0.55 0.55 0.50 1</diffuse>
       <specular>0.1 0.1 0.1 1</specular>
       <attenuation><range>22.00</range><constant>0.4</constant>
@@ -74,7 +74,7 @@
       <cast_shadows>false</cast_shadows>
     </light>
     <light type='point' name='lamp_0_2'>
-      <pose>18.000 -19.300 2.300 0 0 0</pose>
+      <pose>19.000 -19.300 2.300 0 0 0</pose>
       <diffuse>0.55 0.55 0.50 1</diffuse>
       <specular>0.1 0.1 0.1 1</specular>
       <attenuation><range>22.00</range><constant>0.4</constant>
@@ -82,7 +82,7 @@
       <cast_shadows>false</cast_shadows>
     </light>
     <light type='point' name='lamp_1_0'>
-      <pose>-18.000 0.000 2.300 0 0 0</pose>
+      <pose>-19.000 0.000 2.300 0 0 0</pose>
       <diffuse>0.55 0.55 0.50 1</diffuse>
       <specular>0.1 0.1 0.1 1</specular>
       <attenuation><range>22.00</range><constant>0.4</constant>
@@ -98,7 +98,7 @@
       <cast_shadows>false</cast_shadows>
     </light>
     <light type='point' name='lamp_1_2'>
-      <pose>18.000 0.000 2.300 0 0 0</pose>
+      <pose>19.000 0.000 2.300 0 0 0</pose>
       <diffuse>0.55 0.55 0.50 1</diffuse>
       <specular>0.1 0.1 0.1 1</specular>
       <attenuation><range>22.00</range><constant>0.4</constant>
@@ -106,7 +106,7 @@
       <cast_shadows>false</cast_shadows>
     </light>
     <light type='point' name='lamp_2_0'>
-      <pose>-18.000 19.300 2.300 0 0 0</pose>
+      <pose>-19.000 19.300 2.300 0 0 0</pose>
       <diffuse>0.55 0.55 0.50 1</diffuse>
       <specular>0.1 0.1 0.1 1</specular>
       <attenuation><range>22.00</range><constant>0.4</constant>
@@ -122,7 +122,7 @@
       <cast_shadows>false</cast_shadows>
     </light>
     <light type='point' name='lamp_2_2'>
-      <pose>18.000 19.300 2.300 0 0 0</pose>
+      <pose>19.000 19.300 2.300 0 0 0</pose>
       <diffuse>0.55 0.55 0.50 1</diffuse>
       <specular>0.1 0.1 0.1 1</specular>
       <attenuation><range>22.00</range><constant>0.4</constant>
@@ -132,25 +132,25 @@
     <model name='ground'>
       <static>true</static>
       <link name='link'>
-        <collision name='c'><geometry><plane><normal>0 0 1</normal><size>76.0 68.6</size></plane></geometry><surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface></collision>
-        <visual name='floor_vis'><pose>0.0000 0.0000 -0.0100 0 0 0.000000</pose><geometry><box><size>56.0000 48.6000 0.0200</size></box></geometry><material><ambient>0.22 0.22 0.24 1</ambient><diffuse>0.26 0.26 0.28 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <collision name='c'><geometry><plane><normal>0 0 1</normal><size>78.0 68.6</size></plane></geometry><surface><friction><ode><mu>1.0</mu><mu2>1.0</mu2></ode></friction></surface></collision>
+        <visual name='floor_vis'><pose>0.0000 0.0000 -0.0100 0 0 0.000000</pose><geometry><box><size>58.0000 48.6000 0.0200</size></box></geometry><material><ambient>0.22 0.22 0.24 1</ambient><diffuse>0.26 0.26 0.28 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
       </link>
     </model>
     <model name='perimeter_walls'>
       <static>true</static>
       <link name='link'>
-        <collision name='wall_south_col'><pose>0.0000 -23.4000 1.3000 0 0 0.000000</pose><geometry><box><size>54.4000 0.2000 2.6000</size></box></geometry></collision>
-        <visual name='wall_south_vis'><pose>0.0000 -23.4000 1.3000 0 0 0.000000</pose><geometry><box><size>54.4000 0.2000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <collision name='wall_north_col'><pose>0.0000 23.4000 1.3000 0 0 0.000000</pose><geometry><box><size>54.4000 0.2000 2.6000</size></box></geometry></collision>
-        <visual name='wall_north_vis'><pose>0.0000 23.4000 1.3000 0 0 0.000000</pose><geometry><box><size>54.4000 0.2000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <collision name='wall_west_a_col'><pose>-27.1000 -22.6500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 1.7000 2.6000</size></box></geometry></collision>
-        <visual name='wall_west_a_vis'><pose>-27.1000 -22.6500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 1.7000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <collision name='wall_west_b_col'><pose>-27.1000 3.3500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 40.3000 2.6000</size></box></geometry></collision>
-        <visual name='wall_west_b_vis'><pose>-27.1000 3.3500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 40.3000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <collision name='wall_east_a_col'><pose>27.1000 -3.3500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 40.3000 2.6000</size></box></geometry></collision>
-        <visual name='wall_east_a_vis'><pose>27.1000 -3.3500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 40.3000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <collision name='wall_east_b_col'><pose>27.1000 22.6500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 1.7000 2.6000</size></box></geometry></collision>
-        <visual name='wall_east_b_vis'><pose>27.1000 22.6500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 1.7000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <collision name='wall_south_col'><pose>0.0000 -23.4000 1.3000 0 0 0.000000</pose><geometry><box><size>56.4000 0.2000 2.6000</size></box></geometry></collision>
+        <visual name='wall_south_vis'><pose>0.0000 -23.4000 1.3000 0 0 0.000000</pose><geometry><box><size>56.4000 0.2000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <collision name='wall_north_col'><pose>0.0000 23.4000 1.3000 0 0 0.000000</pose><geometry><box><size>56.4000 0.2000 2.6000</size></box></geometry></collision>
+        <visual name='wall_north_vis'><pose>0.0000 23.4000 1.3000 0 0 0.000000</pose><geometry><box><size>56.4000 0.2000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <collision name='wall_west_a_col'><pose>-28.1000 -22.6500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 1.7000 2.6000</size></box></geometry></collision>
+        <visual name='wall_west_a_vis'><pose>-28.1000 -22.6500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 1.7000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <collision name='wall_west_b_col'><pose>-28.1000 3.3500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 40.3000 2.6000</size></box></geometry></collision>
+        <visual name='wall_west_b_vis'><pose>-28.1000 3.3500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 40.3000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <collision name='wall_east_a_col'><pose>28.1000 -3.3500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 40.3000 2.6000</size></box></geometry></collision>
+        <visual name='wall_east_a_vis'><pose>28.1000 -3.3500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 40.3000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <collision name='wall_east_b_col'><pose>28.1000 22.6500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 1.7000 2.6000</size></box></geometry></collision>
+        <visual name='wall_east_b_vis'><pose>28.1000 22.6500 1.3000 0 0 0.000000</pose><geometry><box><size>0.2000 1.7000 2.6000</size></box></geometry><material><ambient>0.55 0.55 0.53 1</ambient><diffuse>0.72 0.72 0.70 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
       </link>
     </model>
     <model name='pillars'>
@@ -324,69 +324,69 @@
         <visual name='dash_N_010_vis'><pose>10.8000 19.3000 0.0170 0 0 0.000000</pose><geometry><box><size>1.6000 0.1200 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
         <visual name='dash_N_011_vis'><pose>13.6000 19.3000 0.0170 0 0 0.000000</pose><geometry><box><size>1.6000 0.1200 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
         <visual name='dash_N_012_vis'><pose>16.4000 19.3000 0.0170 0 0 0.000000</pose><geometry><box><size>1.6000 0.1200 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_000_vis'><pose>-22.5000 -21.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_001_vis'><pose>-22.5000 -18.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_002_vis'><pose>-22.5000 -15.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_003_vis'><pose>-22.5000 -13.1000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_004_vis'><pose>-22.5000 -10.3000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_005_vis'><pose>-22.5000 -7.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_006_vis'><pose>-22.5000 -4.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_007_vis'><pose>-22.5000 -1.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_008_vis'><pose>-22.5000 0.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_009_vis'><pose>-22.5000 3.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_010_vis'><pose>-22.5000 6.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_011_vis'><pose>-22.5000 9.3000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_012_vis'><pose>-22.5000 12.1000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_013_vis'><pose>-22.5000 14.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_014_vis'><pose>-22.5000 17.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_W_015_vis'><pose>-22.5000 20.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_000_vis'><pose>22.5000 -21.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_001_vis'><pose>22.5000 -18.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_002_vis'><pose>22.5000 -15.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_003_vis'><pose>22.5000 -13.1000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_004_vis'><pose>22.5000 -10.3000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_005_vis'><pose>22.5000 -7.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_006_vis'><pose>22.5000 -4.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_007_vis'><pose>22.5000 -1.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_008_vis'><pose>22.5000 0.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_009_vis'><pose>22.5000 3.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_010_vis'><pose>22.5000 6.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_011_vis'><pose>22.5000 9.3000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_012_vis'><pose>22.5000 12.1000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_013_vis'><pose>22.5000 14.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_014_vis'><pose>22.5000 17.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='dashv_E_015_vis'><pose>22.5000 20.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='stop_in_vis'><pose>-24.4000 -19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>0.2500 4.5000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='stop_out_vis'><pose>24.4000 19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>0.2500 4.5000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arr_in_0_vis'><pose>-22.5000 -19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_in_0a_vis'><pose>-21.4000 -19.0200 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_in_0b_vis'><pose>-21.4000 -19.5800 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arr_in_1_vis'><pose>-19.5000 -19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_in_1a_vis'><pose>-18.4000 -19.0200 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_in_1b_vis'><pose>-18.4000 -19.5800 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arr_in_2_vis'><pose>-16.5000 -19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_in_2a_vis'><pose>-15.4000 -19.0200 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_in_2b_vis'><pose>-15.4000 -19.5800 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arr_out_0_vis'><pose>22.5000 19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_out_0a_vis'><pose>23.6000 19.5800 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_out_0b_vis'><pose>23.6000 19.0200 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arr_out_1_vis'><pose>19.5000 19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_out_1a_vis'><pose>20.6000 19.5800 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_out_1b_vis'><pose>20.6000 19.0200 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arr_out_2_vis'><pose>16.5000 19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_out_2a_vis'><pose>17.6000 19.5800 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='arrh_out_2b_vis'><pose>17.6000 19.0200 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_000_vis'><pose>-23.0000 -21.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_001_vis'><pose>-23.0000 -18.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_002_vis'><pose>-23.0000 -15.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_003_vis'><pose>-23.0000 -13.1000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_004_vis'><pose>-23.0000 -10.3000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_005_vis'><pose>-23.0000 -7.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_006_vis'><pose>-23.0000 -4.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_007_vis'><pose>-23.0000 -1.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_008_vis'><pose>-23.0000 0.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_009_vis'><pose>-23.0000 3.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_010_vis'><pose>-23.0000 6.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_011_vis'><pose>-23.0000 9.3000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_012_vis'><pose>-23.0000 12.1000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_013_vis'><pose>-23.0000 14.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_014_vis'><pose>-23.0000 17.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_W_015_vis'><pose>-23.0000 20.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_000_vis'><pose>23.0000 -21.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_001_vis'><pose>23.0000 -18.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_002_vis'><pose>23.0000 -15.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_003_vis'><pose>23.0000 -13.1000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_004_vis'><pose>23.0000 -10.3000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_005_vis'><pose>23.0000 -7.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_006_vis'><pose>23.0000 -4.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_007_vis'><pose>23.0000 -1.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_008_vis'><pose>23.0000 0.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_009_vis'><pose>23.0000 3.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_010_vis'><pose>23.0000 6.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_011_vis'><pose>23.0000 9.3000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_012_vis'><pose>23.0000 12.1000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_013_vis'><pose>23.0000 14.9000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_014_vis'><pose>23.0000 17.7000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='dashv_E_015_vis'><pose>23.0000 20.5000 0.0170 0 0 0.000000</pose><geometry><box><size>0.1200 1.6000 0.0060</size></box></geometry><material><ambient>0.72 0.58 0.06 1</ambient><diffuse>0.90 0.74 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='stop_in_vis'><pose>-25.4000 -19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>0.2500 4.5000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='stop_out_vis'><pose>25.4000 19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>0.2500 4.5000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arr_in_0_vis'><pose>-23.5000 -19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_in_0a_vis'><pose>-22.4000 -19.0200 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_in_0b_vis'><pose>-22.4000 -19.5800 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arr_in_1_vis'><pose>-20.5000 -19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_in_1a_vis'><pose>-19.4000 -19.0200 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_in_1b_vis'><pose>-19.4000 -19.5800 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arr_in_2_vis'><pose>-17.5000 -19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_in_2a_vis'><pose>-16.4000 -19.0200 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_in_2b_vis'><pose>-16.4000 -19.5800 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arr_out_0_vis'><pose>23.5000 19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_out_0a_vis'><pose>24.6000 19.5800 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_out_0b_vis'><pose>24.6000 19.0200 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arr_out_1_vis'><pose>20.5000 19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_out_1a_vis'><pose>21.6000 19.5800 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_out_1b_vis'><pose>21.6000 19.0200 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arr_out_2_vis'><pose>17.5000 19.3000 0.0240 0 0 0.000000</pose><geometry><box><size>2.0000 0.2800 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_out_2a_vis'><pose>18.6000 19.5800 0.0310 0 0 -0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='arrh_out_2b_vis'><pose>18.6000 19.0200 0.0310 0 0 0.610865</pose><geometry><box><size>0.9000 0.2000 0.0060</size></box></geometry><material><ambient>0.85 0.85 0.85 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
       </link>
     </model>
     <model name='gates'>
       <static>true</static>
       <link name='link'>
-        <collision name='gpost_in_col'><pose>-26.6000 -22.3000 0.6000 0 0 0.000000</pose><geometry><box><size>0.3000 0.3000 1.2000</size></box></geometry></collision>
-        <visual name='gpost_in_vis'><pose>-26.6000 -22.3000 0.6000 0 0 0.000000</pose><geometry><box><size>0.3000 0.3000 1.2000</size></box></geometry><material><ambient>0.60 0.20 0.05 1</ambient><diffuse>0.90 0.35 0.08 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='gbar_in_vis'><pose>-26.6000 -22.3000 1.8000 0 0 0.000000</pose><geometry><box><size>0.1200 0.1200 1.1000</size></box></geometry><material><ambient>0.55 0.08 0.06 1</ambient><diffuse>0.80 0.14 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <collision name='gpost_out_col'><pose>26.6000 22.3000 0.6000 0 0 0.000000</pose><geometry><box><size>0.3000 0.3000 1.2000</size></box></geometry></collision>
-        <visual name='gpost_out_vis'><pose>26.6000 22.3000 0.6000 0 0 0.000000</pose><geometry><box><size>0.3000 0.3000 1.2000</size></box></geometry><material><ambient>0.60 0.20 0.05 1</ambient><diffuse>0.90 0.35 0.08 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
-        <visual name='gbar_out_vis'><pose>26.6000 22.3000 1.8000 0 0 0.000000</pose><geometry><box><size>0.1200 0.1200 1.1000</size></box></geometry><material><ambient>0.55 0.08 0.06 1</ambient><diffuse>0.80 0.14 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <collision name='gpost_in_col'><pose>-27.6000 -22.3000 0.6000 0 0 0.000000</pose><geometry><box><size>0.3000 0.3000 1.2000</size></box></geometry></collision>
+        <visual name='gpost_in_vis'><pose>-27.6000 -22.3000 0.6000 0 0 0.000000</pose><geometry><box><size>0.3000 0.3000 1.2000</size></box></geometry><material><ambient>0.60 0.20 0.05 1</ambient><diffuse>0.90 0.35 0.08 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='gbar_in_vis'><pose>-27.6000 -22.3000 1.8000 0 0 0.000000</pose><geometry><box><size>0.1200 0.1200 1.1000</size></box></geometry><material><ambient>0.55 0.08 0.06 1</ambient><diffuse>0.80 0.14 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <collision name='gpost_out_col'><pose>27.6000 22.3000 0.6000 0 0 0.000000</pose><geometry><box><size>0.3000 0.3000 1.2000</size></box></geometry></collision>
+        <visual name='gpost_out_vis'><pose>27.6000 22.3000 0.6000 0 0 0.000000</pose><geometry><box><size>0.3000 0.3000 1.2000</size></box></geometry><material><ambient>0.60 0.20 0.05 1</ambient><diffuse>0.90 0.35 0.08 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
+        <visual name='gbar_out_vis'><pose>27.6000 22.3000 1.8000 0 0 0.000000</pose><geometry><box><size>0.1200 0.1200 1.1000</size></box></geometry><material><ambient>0.55 0.08 0.06 1</ambient><diffuse>0.80 0.14 0.10 1</diffuse><specular>0.1 0.1 0.1 1</specular></material></visual>
       </link>
     </model>
     <model name='ev_chargers'>

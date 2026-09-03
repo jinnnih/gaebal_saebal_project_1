@@ -3,18 +3,18 @@
   "frame_id": "map",
   "scale": 1.0,
   "bounds": {
-    "x_min": -27.0,
-    "x_max": 27.0,
+    "x_min": -28.0,
+    "x_max": 28.0,
     "y_min": -23.3,
     "y_max": 23.3
   },
   "map": {
     "resolution": 0.05,
     "origin": [
-      -28.0,
+      -29.0,
       -24.3
     ],
-    "width_px": 1120,
+    "width_px": 1160,
     "height_px": 972
   },
   "stall": {
@@ -23,12 +23,12 @@
   },
   "reverse_distance": 5.0,
   "entry_pose": [
-    -23.0,
+    -24.0,
     -19.3,
     0.0
   ],
   "exit_pose": [
-    24.5,
+    25.5,
     19.3,
     0.0
   ],
@@ -46,12 +46,12 @@
       "width": 8.0
     },
     "west": {
-      "center_x": -22.5,
-      "width": 9.0
+      "center_x": -23.0,
+      "width": 10.0
     },
     "east": {
-      "center_x": 22.5,
-      "width": 9.0
+      "center_x": 23.0,
+      "width": 10.0
     }
   },
   "robot_spec": {

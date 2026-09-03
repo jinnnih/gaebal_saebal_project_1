@@ -74,7 +74,7 @@ def generate_launch_description():
         # 플래너가 주차면을 가로지르는 것을 막는다. 주차할 때는 런타임으로
         # 꺼야 한다 (ParkManeuver 진입 직전) — 이슈 #7.
         DeclareLaunchArgument('use_costmap_filters', default_value='false'),
-        DeclareLaunchArgument('x', default_value='-23.00'),
+        DeclareLaunchArgument('x', default_value='-24.00'),
         DeclareLaunchArgument('y', default_value='-19.30'),
         DeclareLaunchArgument('yaw', default_value='0.0'),
         world,
