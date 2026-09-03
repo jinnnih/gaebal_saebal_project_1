@@ -261,9 +261,9 @@ planner_server:
       downsampling_factor: 1
       downsample_obstacle_heuristic: true
       allow_unknown: false
-      max_iterations: 2000000
+      max_iterations: 1200000
       max_on_approach_iterations: 1200
-      max_planning_time: 8.0
+      max_planning_time: 5.0
       motion_model_for_search: "REEDS_SHEPP"   # 전진+후진 (DUBIN은 전진만)
       # 72(5도) -> 64(5.6도). 탐색 공간이 그만큼 줄고, 최소회전반경
       # 3.57 m 짜리 차량에 5.6도 분해능이면 충분하다.
@@ -280,9 +280,13 @@ planner_server:
       non_straight_penalty: 1.20
       # 통로 중앙 선호도. inflation_radius 를 외접원 이상으로 키워
       # 통로에 비용 기울기가 생겼으므로 이 값이 실제로 작동한다.
-      # 통로 중앙 선호도. 다운샘플링을 쓰던 시절 7.0 으로 올렸는데,
-      # 전해상도로 되돌린 뒤에도 이 값으로 6/6 을 검증했으므로 그대로 둔다.
-      # (4.0 으로 되돌리는 것은 재검증 후에 할 일이다)
+      # 통로 중앙 선호도. inflation_radius 를 외접원 이상으로 키워
+      # 통로에 비용 기울기가 생겼으므로 이 값이 실제로 작동한다.
+      # ! 4.0 -> 7.0. 4.0 으로 되돌려 봤더니 확실히 나빴다 (실측):
+      #     입구->출구   2/2  ->  0/3
+      #     Optimizer 실패  1  ->  94 회
+      #   77 m 짜리 긴 경로일수록 통로 중앙을 못 지키면 누적 이탈이 커진다.
+      #   짧은 경로(코너/같은통로)는 4.0 으로도 통과해서 잘 안 드러난다.
       cost_penalty: 7.0
       retrospective_penalty: 0.015
       lookup_table_size: 20.0
