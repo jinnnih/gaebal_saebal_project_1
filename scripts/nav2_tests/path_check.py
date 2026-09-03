@@ -44,7 +44,9 @@ def in_row_y(y):
     """그 y 높이에 실제로 주차면이 있는가. 통로 구간이면 False."""
     return any(y0 <= y <= y1 for _, y0, y1 in ROWS)
 
-SX, SY = _D['entry_pose'][0], _D['entry_pose'][1]
+SX, SY, SYAW = _D['entry_pose']
+# ! 시작 yaw 를 빼먹으면 안 된다. 입구가 45 deg 로 바뀌었는데 0 으로
+#   계획을 요청하면 실제로 못 따라가는 경로가 나온다.
 MIN_R = _D['robot_spec']['min_turning_radius']
 GX = float(sys.argv[1]) if len(sys.argv) > 1 else 0.0
 GY = float(sys.argv[2]) if len(sys.argv) > 2 else 0.0
@@ -59,9 +61,11 @@ def main():
         print('compute_path_to_pose 서버 없음'); return 1
     g = ComputePathToPose.Goal()
     g.use_start = True
-    for p, (x, y) in (('start', (SX, SY)), ('goal', (GX, GY))):
+    for p, (x, y, th) in (('start', (SX, SY, SYAW)), ('goal', (GX, GY, 0.0))):
         ps = PoseStamped(); ps.header.frame_id = 'map'
-        ps.pose.position.x = x; ps.pose.position.y = y; ps.pose.orientation.w = 1.0
+        ps.pose.position.x = x; ps.pose.position.y = y
+        ps.pose.orientation.z = math.sin(th / 2.0)
+        ps.pose.orientation.w = math.cos(th / 2.0)
         setattr(g, p, ps)
     t0 = time.time()
     fut = ac.send_goal_async(g)

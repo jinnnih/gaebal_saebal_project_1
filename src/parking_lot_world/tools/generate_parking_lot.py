@@ -145,7 +145,15 @@ GATE_OUT = (AISLE_N_C, X_MAX)
 #   (track_unknown_space=true, allow_unknown=false) 플래너가 탐색을 못 해
 #   "exceeded maximum iterations" 로 실패한다. 복구가 복구를 막는 상태가 된다.
 #   4.0 m 로 넣으면 BackUp 을 세 번 해도 차체가 안쪽에 남는다. (2026-09-02 실측)
-START_POSE = (X_MIN + S(4.0), AISLE_S_C, 0.0)          # 입차 시작 지점
+# ! 입구 yaw 는 0 이 아니라 45 도다. 게이트를 지나며 이미 좌회전을 시작한
+#   상태로 둔다. 이유는 코너 실패 계측에서 나왔다.
+#   yaw 0 이면 입구에서 서측 차로로 붙기까지 90 도를 돌아야 하는데,
+#   그 회전 도중 앞바깥 모서리가 A 행 쪽으로 크게 쓸고 지나간다.
+#   추종 오차 0.7 m 가 얹히면 모서리가 keepout 인플레이션 253 대역에 닿고,
+#   MPPI 가 전진을 거부해 후진/전진 셔플에 갇힌다 (2026-09-03 실측).
+#   45 도로 두면 필요한 회전이 절반이라 포락선이 크게 줄어든다.
+#   실제 주차장에서도 게이트를 통과하며 이미 핸들을 꺾는다.
+START_POSE = (X_MIN + S(4.0), AISLE_S_C, math.pi / 4)  # 입차 시작 지점
 # 출구도 같은 이유. X_MAX-1.5 면 앞범퍼가 게이트 밖이라, 목표 허용오차(0.35)
 # 안에서도 차체가 게이트 문설주에 걸려 "Start occupied" 가 났다.
 # X_MAX-2.5 면 앞범퍼가 정확히 벽선에 닿는다 = 차체 전체가 안쪽.
@@ -285,35 +293,55 @@ ENTRY_TURN_MARGIN = S(0.30)
 
 
 def check_entry_turn():
-    """입구에서 90도 좌회전할 때 차체가 주차블록을 치지 않는지.
+    """입구에서 북쪽(서측 차로 방향)으로 좌회전할 때 차체가 주차블록을 치는가.
 
     ! 회전 '종료 자세' 만 보면 안 된다. 처음에 그렇게 검사했다가 통과시켰는데
       실제로는 회전 **도중** 앞바깥 모서리가 더 멀리 나간다.
 
-      좌회전 중심은 뒤축에서 왼쪽으로 R_min 떨어진 점이다.
-      앞오른쪽 모서리는 그 중심에서 이만큼 떨어져 돈다:
+    ! 공식으로 풀지 않고 호를 따라 실제 풋프린트 네 모서리를 찍는다.
+      입구 yaw 가 0 이 아니면(게이트를 지나며 이미 돌아 있는 경우) 필요한
+      회전각이 줄어 포락선이 훨씬 작아지는데, 90도 고정 공식으로는 그게
+      안 잡힌다.
 
-          d = hypot(반길이 + 축거/2,  R_min + 반폭)
-
-      base_link 이 축거 중점이라 뒤축까지 축거/2 를 더해야 한다.
-      최소반경이 가장 유리하다 — 반경을 키우면 d 가 오히려 커진다.
+      base_link 이 축거 중점이라 뒤축은 뒤로 축거/2 만큼 떨어져 있다.
+      최소반경이 가장 유리하다 - 반경을 키우면 포락선이 오히려 커진다.
     """
-    d = math.hypot(ROBOT_L / 2.0 + ROBOT_WHEELBASE / 2.0,
-                   ROBOT_MIN_R + ROBOT_W / 2.0)
-    swept_east = START_POSE[0] + d
+    x0, y0, th0 = START_POSE
+    half_wb = ROBOT_WHEELBASE / 2.0
+    # 뒤축 위치와 좌회전 중심
+    rx = x0 - half_wb * math.cos(th0)
+    ry = y0 - half_wb * math.sin(th0)
+    cx = rx + ROBOT_MIN_R * math.cos(th0 + math.pi / 2)
+    cy = ry + ROBOT_MIN_R * math.sin(th0 + math.pi / 2)
+    corners = [(ROBOT_L / 2.0, ROBOT_W / 2.0), (ROBOT_L / 2.0, -ROBOT_W / 2.0),
+               (-ROBOT_L / 2.0, -ROBOT_W / 2.0), (-ROBOT_L / 2.0, ROBOT_W / 2.0)]
+    swept_east = -1e9
+    steps = 180
+    for k in range(steps + 1):
+        th = th0 + (math.pi / 2 - th0) * k / steps      # 북쪽까지 좌회전
+        # 그 헤딩일 때 뒤축 위치 = 중심에서 오른쪽으로 R
+        bx = cx + ROBOT_MIN_R * math.cos(th - math.pi / 2)
+        by = cy + ROBOT_MIN_R * math.sin(th - math.pi / 2)
+        # base_link 은 뒤축보다 축거/2 앞
+        px = bx + half_wb * math.cos(th)
+        py = by + half_wb * math.sin(th)
+        for lx, ly in corners:
+            swept_east = max(swept_east,
+                             px + lx * math.cos(th) - ly * math.sin(th))
     limit = BLOCK_X0 - ENTRY_TURN_MARGIN
     if swept_east > limit:
         for msg in (
             '입구 좌회전 공간 부족: 최동단 %.2f > 한계 %.2f' % (swept_east, limit),
-            '  입구 x %.2f + 포락선 반경 %.2f = %.2f' % (START_POSE[0], d, swept_east),
+            '  입구 (%.2f, %.2f) yaw %.1f deg' % (x0, y0, math.degrees(th0)),
             '  주차블록 서쪽 끝 %.2f, 여유 요구 %.2f'
             % (BLOCK_X0, ENTRY_TURN_MARGIN),
-            '  LANE_W 를 키우면 X_MIN 이 서쪽으로 가서 입구도 같이 물러난다',
-            '  (주차면 좌표는 x, y 모두 바뀌지 않는다).',
+            '  입구 yaw 를 키우면(게이트에서 이미 돌아 있게) 회전각이 줄어',
+            '  포락선이 크게 작아진다. LANE_W 를 키워도 된다 -- X_MIN 이',
+            '  서쪽으로 가서 입구도 같이 물러난다 (주차면 좌표는 안 바뀐다).',
         ):
             print(msg)
         raise SystemExit(1)
-    return limit - swept_east, d
+    return limit - swept_east, swept_east
 
 
 SPOT_BY_ID = {s["id"]: s for s in SPOTS}
@@ -929,7 +957,13 @@ controller_server:
     general_goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.35
-      yaw_goal_tolerance: 0.20
+      # ! 통과/이동 목표의 방향 허용치는 넉넉해야 한다. Ackermann 은 제자리
+      #   회전이 안 되므로, 위치를 맞춘 뒤 방향만 틀리면 고칠 방법이 없다.
+      #   0.20 rad(11.5도)이었을 때 출구에서 목표 0.19 m 까지 갔는데도
+      #   (xy 허용 0.35) 방향을 못 맞춰 30 초 멈춰 있다 ABORTED 났다.
+      #   0.50 rad(28.6도)로 푼다. 정밀한 방향이 필요한 주차는 아래
+      #   parking_goal_checker(0.06 rad)가 따로 맡는다.
+      yaw_goal_tolerance: 0.50
       stateful: true
 
     # 주차 정차용 — 정밀 허용오차 (계획서 5주차 정량지표)
@@ -1373,7 +1407,8 @@ def main(root):
     print("  맵 그리드   : %d x %d px @ %.3f m/px" % (MAP_W, MAP_H, MAP_RES))
     print("  최소회전반경: %.3f m" % ROBOT_MIN_R)
     _m, _n = check_entry_turn()
-    print("  입구 좌회전 여유: %.2f m (포락선 반경 %.2f)" % (_m, _n))
+    print("  입구 좌회전 여유: %.2f m (포락선 최동단 %.2f, 블록 %.2f)"
+          % (_m, _n, BLOCK_X0))
     print()
 
     # --- SDF (일반 / 저사양 두 버전) ---

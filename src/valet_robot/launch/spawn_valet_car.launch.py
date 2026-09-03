@@ -7,7 +7,7 @@
 
 주요 인자
   x, y, yaw          스폰 포즈. 기본값은 parking_lot_world README 의
-                     입구 진입 직후 지점 (-24.00, -19.30, 0.0)
+                     입구 진입 직후 지점 (-24.00, -19.30, 45 deg)
                      = parking_spots.json 의 entry_pose
   cmd_vel_topic      twist_to_ackermann 이 구독할 토픽 (기본 /cmd_vel).
                      Nav2 와 함께 쓸 때는 /cmd_vel_smoothed
@@ -115,7 +115,9 @@ def generate_launch_description():
         DeclareLaunchArgument('x', default_value='-24.00'),
         DeclareLaunchArgument('y', default_value='-19.30'),
         DeclareLaunchArgument('z', default_value='0.05'),
-        DeclareLaunchArgument('yaw', default_value='0.0'),
+        # 45 deg. 게이트를 지나며 이미 좌회전을 시작한 자세다.
+        # parking_spots.json 의 entry_pose 와 같아야 한다.
+        DeclareLaunchArgument('yaw', default_value='0.7854'),
         DeclareLaunchArgument('cmd_vel_topic', default_value='/cmd_vel'),
         DeclareLaunchArgument('cmd_vel_stamped', default_value='false'),
         DeclareLaunchArgument('rviz', default_value='false'),

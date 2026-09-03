@@ -28,7 +28,7 @@ amcl:
       x: -24.000
       y: -19.300
       z: 0.0
-      yaw: 0.0000
+      yaw: 0.7854
 
 bt_navigator:
   ros__parameters:
@@ -86,7 +86,13 @@ controller_server:
     general_goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
       xy_goal_tolerance: 0.35
-      yaw_goal_tolerance: 0.20
+      # ! 통과/이동 목표의 방향 허용치는 넉넉해야 한다. Ackermann 은 제자리
+      #   회전이 안 되므로, 위치를 맞춘 뒤 방향만 틀리면 고칠 방법이 없다.
+      #   0.20 rad(11.5도)이었을 때 출구에서 목표 0.19 m 까지 갔는데도
+      #   (xy 허용 0.35) 방향을 못 맞춰 30 초 멈춰 있다 ABORTED 났다.
+      #   0.50 rad(28.6도)로 푼다. 정밀한 방향이 필요한 주차는 아래
+      #   parking_goal_checker(0.06 rad)가 따로 맡는다.
+      yaw_goal_tolerance: 0.50
       stateful: true
 
     # 주차 정차용 — 정밀 허용오차 (계획서 5주차 정량지표)
