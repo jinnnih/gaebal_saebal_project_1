@@ -240,14 +240,27 @@ planner_server:
     GridBased:
       plugin: "nav2_smac_planner::SmacPlannerHybrid"
       tolerance: 0.30
-      downsample_costmap: false
-      downsampling_factor: 1
+      # ! 부지가 커지면서(1160 x 972 셀 x 72 각도 = 8100 만 노드) 77 m 짜리
+      #   대각선 경로에 max_iterations 가 모자라 "exceeded maximum iterations"
+      #   로 실패했다. 입구->출구가 3 회 모두 출발점에서 못 나갔다.
+      #   계획용으로만 0.05 -> 0.10 m 로 줄이면 탐색 공간이 1/4 이 된다.
+      #   주행용 코스트맵은 그대로 0.05 다.
+      #
+      #   격자를 안 줄이고 각도 해상도(72->64)와 탐색 한도(4M/12s)로도
+      #   풀어 봤는데 더 나빴다. 경로 자체는 74.9 m 로 짧고 좋지만 계획에
+      #   5.1 s 가 걸려 재계획마다 컨트롤러가 낡은 경로로 달린다.
+      #   결과: 입구->출구 3/3 -> 1/3 (목표를 지나쳐 되돌아오지 못함).
+      #   계획 품질보다 계획 주기가 중요하다.
+      downsample_costmap: true
+      downsampling_factor: 2
       allow_unknown: false
-      max_iterations: 1200000
+      max_iterations: 2000000
       max_on_approach_iterations: 1200
-      max_planning_time: 5.0
+      max_planning_time: 8.0
       motion_model_for_search: "REEDS_SHEPP"   # 전진+후진 (DUBIN은 전진만)
-      angle_quantization_bins: 72
+      # 72(5도) -> 64(5.6도). 탐색 공간이 그만큼 줄고, 최소회전반경
+      # 3.57 m 짜리 차량에 5.6도 분해능이면 충분하다.
+      angle_quantization_bins: 64
       analytic_expansion_ratio: 3.5
       analytic_expansion_max_length: 3.0
       minimum_turning_radius: 3.570
@@ -256,7 +269,11 @@ planner_server:
       non_straight_penalty: 1.20
       # 통로 중앙 선호도. inflation_radius 를 외접원 이상으로 키워
       # 통로에 비용 기울기가 생겼으므로 이 값이 실제로 작동한다.
-      cost_penalty: 4.0
+      # ! 다운샘플링(0.10 m)을 켜면 인플레이션도 같이 거칠어져 통로
+      #   중앙으로 미는 기울기가 약해진다. 그 상태로 4.0 을 두니
+      #   경로가 주차행 경계에 붙어 코너에서 실패했다.
+      #   격자가 거칠어진 만큼 선호도를 올려 보정한다. 4.0 -> 7.0
+      cost_penalty: 7.0
       retrospective_penalty: 0.015
       lookup_table_size: 20.0
       cache_obstacle_heuristic: true

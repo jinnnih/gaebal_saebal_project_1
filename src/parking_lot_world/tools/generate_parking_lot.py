@@ -157,7 +157,14 @@ START_POSE = (X_MIN + S(4.0), AISLE_S_C, math.pi / 4)  # 입차 시작 지점
 # 출구도 같은 이유. X_MAX-1.5 면 앞범퍼가 게이트 밖이라, 목표 허용오차(0.35)
 # 안에서도 차체가 게이트 문설주에 걸려 "Start occupied" 가 났다.
 # X_MAX-2.5 면 앞범퍼가 정확히 벽선에 닿는다 = 차체 전체가 안쪽.
-EXIT_POSE = (X_MAX - S(2.5), AISLE_N_C, 0.0)           # 출차 최종 목표
+# ! 출구도 입구와 같은 4.0 m 여야 한다. 2.5 m 였을 때 다음이 났다.
+#   차체 반길이가 2.25 m 라 앞범퍼가 X_MAX 에서 0.25 m 밖에 안 떨어진다.
+#   그런데 목표 허용오차(xy 0.35)를 다 쓰면 앞범퍼가 부지 경계를 0.10 m
+#   넘는다 -- Nav2 가 "도달" 로 인정할 수 있는 자세인데 그 자세의 풋프린트가
+#   keepout(부지 밖)에 걸린다. 목표 영역 자체가 일부 무효인 셈이다.
+#   실측: 차가 (25.83, 20.43)까지 가서 앞범퍼가 경계를 0.08 m 넘었고,
+#   목표 1.18 m 앞에서 빠져나오지 못했다. (2026-09-03)
+EXIT_POSE = (X_MAX - S(4.0), AISLE_N_C, 0.0)           # 출차 최종 목표
 QUEUE_POSE = (LANE_W_C, AISLE_S_C + S(3.0), math.pi / 2)  # 대기열 지점
 
 # --- 열 메타 ------------------------------------------------------------
@@ -290,6 +297,49 @@ SPOTS = build_spots()
 # 253 인플레이션 대역이 아니라 치명 셀(254) 기준이다 —
 # critical_cost 를 60 으로 낮춰 253 은 지나갈 수 있게 했기 때문.
 ENTRY_TURN_MARGIN = S(0.30)
+# general_goal_checker 의 xy 허용오차. 아래 검사와 NAV2_YAML 이 같이 쓴다.
+GOAL_XY_TOL = S(0.35)
+
+
+def _pose_extent(x, y, th):
+    """그 자세에서 풋프린트 네 모서리의 x, y 최대/최소."""
+    c, s = math.cos(th), math.sin(th)
+    xs, ys = [], []
+    for lx, ly in ((ROBOT_L / 2.0, ROBOT_W / 2.0), (ROBOT_L / 2.0, -ROBOT_W / 2.0),
+                   (-ROBOT_L / 2.0, -ROBOT_W / 2.0), (-ROBOT_L / 2.0, ROBOT_W / 2.0)):
+        xs.append(x + lx * c - ly * s)
+        ys.append(y + lx * s + ly * c)
+    return min(xs), max(xs), min(ys), max(ys)
+
+
+def check_gate_poses():
+    """입구/출구 목표가 목표 허용오차까지 써도 부지 안에 있는가.
+
+    ! 목표 자체는 멀쩡해도, 허용오차 반경만큼 벗어난 자세가 부지 밖이면
+      Nav2 는 "도달" 로 인정할 수 있는데 그 자세의 풋프린트는 keepout 에
+      걸린다. 목표 영역의 일부가 무효인 셈이고, 차가 그 근처에서 빠져나오지
+      못한다. 실제로 출구가 X_MAX-2.5 였을 때 이걸로 실패했다.
+    """
+    bad = []
+    for nm, (px, py, pth) in (("입구", START_POSE), ("출구", EXIT_POSE)):
+        x0, x1, y0, y1 = _pose_extent(px, py, pth)
+        # 허용오차만큼 어느 방향으로든 밀릴 수 있다
+        m = min(x0 - GOAL_XY_TOL - X_MIN, X_MAX - (x1 + GOAL_XY_TOL),
+                y0 - GOAL_XY_TOL - Y_MIN, Y_MAX - (y1 + GOAL_XY_TOL))
+        if m < ENTRY_TURN_MARGIN:
+            bad.append("%s (%.2f, %.2f, %.0f deg): 허용오차 포함 여유 %.2f m "
+                       "< 요구 %.2f m"
+                       % (nm, px, py, math.degrees(pth), m, ENTRY_TURN_MARGIN))
+        else:
+            print("  %s 포즈 부지 여유: %.2f m (허용오차 %.2f 포함)"
+                  % (nm, m, GOAL_XY_TOL))
+    if bad:
+        for b in bad:
+            print(b)
+        print("  게이트에서 더 안쪽으로 넣어야 한다 "
+              "(START_POSE / EXIT_POSE 의 X_MIN, X_MAX 오프셋).")
+        raise SystemExit(1)
+
 
 
 def check_entry_turn():
@@ -956,7 +1006,7 @@ controller_server:
     # 통로 주행용 — 여유 있는 허용오차
     general_goal_checker:
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.35
+      xy_goal_tolerance: {GOAL_TOL:.2f}
       # ! 통과/이동 목표의 방향 허용치는 넉넉해야 한다. Ackermann 은 제자리
       #   회전이 안 되므로, 위치를 맞춘 뒤 방향만 틀리면 고칠 방법이 없다.
       #   0.20 rad(11.5도)이었을 때 출구에서 목표 0.19 m 까지 갔는데도
@@ -1111,14 +1161,27 @@ planner_server:
     GridBased:
       plugin: "nav2_smac_planner::SmacPlannerHybrid"
       tolerance: 0.30
-      downsample_costmap: false
-      downsampling_factor: 1
+      # ! 부지가 커지면서(1160 x 972 셀 x 72 각도 = 8100 만 노드) 77 m 짜리
+      #   대각선 경로에 max_iterations 가 모자라 "exceeded maximum iterations"
+      #   로 실패했다. 입구->출구가 3 회 모두 출발점에서 못 나갔다.
+      #   계획용으로만 0.05 -> 0.10 m 로 줄이면 탐색 공간이 1/4 이 된다.
+      #   주행용 코스트맵은 그대로 0.05 다.
+      #
+      #   격자를 안 줄이고 각도 해상도(72->64)와 탐색 한도(4M/12s)로도
+      #   풀어 봤는데 더 나빴다. 경로 자체는 74.9 m 로 짧고 좋지만 계획에
+      #   5.1 s 가 걸려 재계획마다 컨트롤러가 낡은 경로로 달린다.
+      #   결과: 입구->출구 3/3 -> 1/3 (목표를 지나쳐 되돌아오지 못함).
+      #   계획 품질보다 계획 주기가 중요하다.
+      downsample_costmap: true
+      downsampling_factor: 2
       allow_unknown: false
-      max_iterations: 1200000
+      max_iterations: 2000000
       max_on_approach_iterations: 1200
-      max_planning_time: 5.0
+      max_planning_time: 8.0
       motion_model_for_search: "REEDS_SHEPP"   # 전진+후진 (DUBIN은 전진만)
-      angle_quantization_bins: 72
+      # 72(5도) -> 64(5.6도). 탐색 공간이 그만큼 줄고, 최소회전반경
+      # 3.57 m 짜리 차량에 5.6도 분해능이면 충분하다.
+      angle_quantization_bins: 64
       analytic_expansion_ratio: 3.5
       analytic_expansion_max_length: 3.0
       minimum_turning_radius: {MIN_R:.3f}
@@ -1127,7 +1190,11 @@ planner_server:
       non_straight_penalty: 1.20
       # 통로 중앙 선호도. inflation_radius 를 외접원 이상으로 키워
       # 통로에 비용 기울기가 생겼으므로 이 값이 실제로 작동한다.
-      cost_penalty: 4.0
+      # ! 다운샘플링(0.10 m)을 켜면 인플레이션도 같이 거칠어져 통로
+      #   중앙으로 미는 기울기가 약해진다. 그 상태로 4.0 을 두니
+      #   경로가 주차행 경계에 붙어 코너에서 실패했다.
+      #   격자가 거칠어진 만큼 선호도를 올려 보정한다. 4.0 -> 7.0
+      cost_penalty: 7.0
       retrospective_penalty: 0.015
       lookup_table_size: 20.0
       cache_obstacle_heuristic: true
@@ -1334,6 +1401,7 @@ def nav2_yaml():
     fp_rear = -(ROBOT_L * 0.5 + S(0.05))
     fp_hw = ROBOT_W * 0.5 + S(0.05)
     vmax = S(1.60)          # 차량 능력치 상한 (velocity_smoother 용)
+    goal_tol = GOAL_XY_TOL
     cvmax = S(1.00)         # 통로 주행 상한 (MPPI 용). 코너 추종을 위해 낮춤
     vrev = S(0.60)
     wzmax = vmax / ROBOT_MIN_R
@@ -1343,7 +1411,7 @@ def nav2_yaml():
         STEER_DEG=math.degrees(ROBOT_MAX_STEER),
         START_X=START_POSE[0], START_Y=START_POSE[1], START_YAW=START_POSE[2],
         VMAX=vmax, VREV=vrev, WZMAX=wzmax, RES=MAP_RES,
-        CVMAX=cvmax, CWZMAX=cwzmax,
+        CVMAX=cvmax, CWZMAX=cwzmax, GOAL_TOL=goal_tol,
         FP_FX=fp_front, FP_RX=fp_rear, FP_HW=fp_hw,
     )
 
@@ -1406,6 +1474,7 @@ def main(root):
              sum(1 for s in SPOTS if s["type"] == "hatched")))
     print("  맵 그리드   : %d x %d px @ %.3f m/px" % (MAP_W, MAP_H, MAP_RES))
     print("  최소회전반경: %.3f m" % ROBOT_MIN_R)
+    check_gate_poses()
     _m, _n = check_entry_turn()
     print("  입구 좌회전 여유: %.2f m (포락선 최동단 %.2f, 블록 %.2f)"
           % (_m, _n, BLOCK_X0))
