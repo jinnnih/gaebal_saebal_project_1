@@ -298,7 +298,14 @@ SPOTS = build_spots()
 # critical_cost 를 60 으로 낮춰 253 은 지나갈 수 있게 했기 때문.
 ENTRY_TURN_MARGIN = S(0.30)
 # general_goal_checker 의 xy 허용오차. 아래 검사와 NAV2_YAML 이 같이 쓴다.
-GOAL_XY_TOL = S(0.35)
+# ! 차량 크기에 맞춰야 한다. Nav2 기본값 0.25 m 는 전장 0.35 m 짜리 소형
+#   차동구동 로봇 기준이다 (전장의 0.7 배). 전장 4.5 m 차량에 0.35 m 를
+#   그대로 쓰면 전장의 8% 로, 제자리 회전도 못 하는 차가 맞추기 어렵다.
+#   실측: 출구에서 목표를 0.6 m 지나친 뒤 되돌아오려고 계속 기동하다
+#   시간 초과했다. GoalCritic 의 감속 거리를 4.0 m 로 늘려도 마찬가지였다.
+#   전장의 13% 인 0.60 m 로 잡는다. 정밀한 정지가 필요한 주차는
+#   parking_goal_checker(0.12 m)가 따로 맡는다.
+GOAL_XY_TOL = S(0.60)
 
 
 def _pose_extent(x, y, th):
@@ -1086,8 +1093,13 @@ controller_server:
       GoalCritic:
         enabled: true
         cost_power: 1
-        cost_weight: 5.0
-        threshold_to_consider: 1.4
+        # ! 전장 4.5 m 차량은 목표에 늦게 반응하면 못 선다.
+        #   threshold 1.4 m 는 1.0 m/s 로 접근할 때 1.4 초 전이라, 그 안에
+        #   세우려면 감속이 부족하다. 실측으로 출구에서 목표를 1.45 m 지나쳐
+        #   되돌아오지 못하고 ABORTED 났다.
+        #   차체 길이만큼은 미리 보게 4.0 m 로 늘리고 가중치도 올린다.
+        cost_weight: 8.0
+        threshold_to_consider: 4.0
       GoalAngleCritic:
         enabled: true
         cost_power: 1
@@ -1164,16 +1176,18 @@ planner_server:
       # ! 부지가 커지면서(1160 x 972 셀 x 72 각도 = 8100 만 노드) 77 m 짜리
       #   대각선 경로에 max_iterations 가 모자라 "exceeded maximum iterations"
       #   로 실패했다. 입구->출구가 3 회 모두 출발점에서 못 나갔다.
-      #   계획용으로만 0.05 -> 0.10 m 로 줄이면 탐색 공간이 1/4 이 된다.
-      #   주행용 코스트맵은 그대로 0.05 다.
+      # ! downsample_costmap 은 인플레이션까지 같이 거칠게 만든다.
+      #   다운샘플러가 최종 코스트맵(인플레이션 포함)을 2x2 풀링하므로
+      #   계획 격자만 골라서 줄일 수가 없다. 실측으로 대가가 있었다:
+      #   경로가 주차행 경계에 붙어 Optimizer 실패 0 -> 110~213 회.
       #
-      #   격자를 안 줄이고 각도 해상도(72->64)와 탐색 한도(4M/12s)로도
-      #   풀어 봤는데 더 나빴다. 경로 자체는 74.9 m 로 짧고 좋지만 계획에
-      #   5.1 s 가 걸려 재계획마다 컨트롤러가 낡은 경로로 달린다.
-      #   결과: 입구->출구 3/3 -> 1/3 (목표를 지나쳐 되돌아오지 못함).
-      #   계획 품질보다 계획 주기가 중요하다.
-      downsample_costmap: true
-      downsampling_factor: 2
+      #   대신 downsample_obstacle_heuristic 을 쓴다. 탐색을 이끄는
+      #   장애물 휴리스틱만 거친 격자에서 계산하고, 실제 충돌검사와
+      #   비용 조회는 원해상도(0.05 m) 인플레이션을 그대로 본다.
+      #   -> "계획은 싸게, 경로 품질은 그대로" 가 된다.
+      downsample_costmap: false
+      downsampling_factor: 1
+      downsample_obstacle_heuristic: true
       allow_unknown: false
       max_iterations: 2000000
       max_on_approach_iterations: 1200
@@ -1183,17 +1197,20 @@ planner_server:
       # 3.57 m 짜리 차량에 5.6도 분해능이면 충분하다.
       angle_quantization_bins: 64
       analytic_expansion_ratio: 3.5
-      analytic_expansion_max_length: 3.0
+      # ! 3.0 m 는 최소회전반경(3.57)보다도 짧다. 그러면 목표로 쏘는
+      #   해석적 확장(Reeds-Shepp shot)이 거의 성공하지 못해서, 75 m 짜리
+      #   경로를 전부 격자 탐색으로 푼다. 계획에 5.1 s 가 걸렸다.
+      #   Nav2 권장은 대략 3.5 x R_min 이다.
+      analytic_expansion_max_length: {AEXP:.1f}
       minimum_turning_radius: {MIN_R:.3f}
       reverse_penalty: 2.1        # 낮출수록 후진 적극 사용 (주차 프로파일 1.3)
       change_penalty: 0.15
       non_straight_penalty: 1.20
       # 통로 중앙 선호도. inflation_radius 를 외접원 이상으로 키워
       # 통로에 비용 기울기가 생겼으므로 이 값이 실제로 작동한다.
-      # ! 다운샘플링(0.10 m)을 켜면 인플레이션도 같이 거칠어져 통로
-      #   중앙으로 미는 기울기가 약해진다. 그 상태로 4.0 을 두니
-      #   경로가 주차행 경계에 붙어 코너에서 실패했다.
-      #   격자가 거칠어진 만큼 선호도를 올려 보정한다. 4.0 -> 7.0
+      # 통로 중앙 선호도. 다운샘플링을 쓰던 시절 7.0 으로 올렸는데,
+      # 전해상도로 되돌린 뒤에도 이 값으로 6/6 을 검증했으므로 그대로 둔다.
+      # (4.0 으로 되돌리는 것은 재검증 후에 할 일이다)
       cost_penalty: 7.0
       retrospective_penalty: 0.015
       lookup_table_size: 20.0
@@ -1402,6 +1419,7 @@ def nav2_yaml():
     fp_hw = ROBOT_W * 0.5 + S(0.05)
     vmax = S(1.60)          # 차량 능력치 상한 (velocity_smoother 용)
     goal_tol = GOAL_XY_TOL
+    aexp = 3.5 * ROBOT_MIN_R      # 해석적 확장 최대 길이
     cvmax = S(1.00)         # 통로 주행 상한 (MPPI 용). 코너 추종을 위해 낮춤
     vrev = S(0.60)
     wzmax = vmax / ROBOT_MIN_R
@@ -1411,7 +1429,7 @@ def nav2_yaml():
         STEER_DEG=math.degrees(ROBOT_MAX_STEER),
         START_X=START_POSE[0], START_Y=START_POSE[1], START_YAW=START_POSE[2],
         VMAX=vmax, VREV=vrev, WZMAX=wzmax, RES=MAP_RES,
-        CVMAX=cvmax, CWZMAX=cwzmax, GOAL_TOL=goal_tol,
+        CVMAX=cvmax, CWZMAX=cwzmax, GOAL_TOL=goal_tol, AEXP=aexp,
         FP_FX=fp_front, FP_RX=fp_rear, FP_HW=fp_hw,
     )
 
