@@ -154,9 +154,21 @@ GATE_OUT = (AISLE_N_C, X_MAX)
 #   45 도로 두면 필요한 회전이 절반이라 포락선이 크게 줄어든다.
 #   실제 주차장에서도 게이트를 통과하며 이미 핸들을 꺾는다.
 START_POSE = (X_MIN + S(4.0), AISLE_S_C, math.pi / 4)  # 입차 시작 지점
-# 출구도 같은 이유. X_MAX-1.5 면 앞범퍼가 게이트 밖이라, 목표 허용오차(0.35)
-# 안에서도 차체가 게이트 문설주에 걸려 "Start occupied" 가 났다.
-# X_MAX-2.5 면 앞범퍼가 정확히 벽선에 닿는다 = 차체 전체가 안쪽.
+# ! 출구는 6.0 m 안쪽이다. 이유가 입구와 다르다.
+#   동측 차로(중심 x=X_MAX-5)에서 북상하다 북통로로 우회전하는 것이
+#   **기하적으로 불가능**하다.
+#
+#     최소반경 우회전 종료 x = 차로중심 + R_min = 26.57
+#     그때 앞범퍼            = +반길이         = 28.82
+#     통과 가능 상한(벽 - 내접원)               = 27.05
+#     -> 1.77 m 초과. 반경을 키우면 더 나빠진다.
+#
+#   실측: 차가 yaw 50 도에 갇혀 30 초 넘게 전후진을 반복했다 (2026-09-04).
+#   플래너는 253 을 치명으로 안 보므로 이 경로를 내지만 MPPI 는 못 간다.
+#
+#   -> 출구는 북통로를 따라 **서쪽에서** 접근해야 한다.
+#      출구를 서쪽으로 물리면 동측 차로 경유는 되돌아오는 거리가 생겨
+#      (x=22.0 이면 4.57 m) 플래너가 자연히 서측 경로를 택한다.
 # ! 출구도 입구와 같은 4.0 m 여야 한다. 2.5 m 였을 때 다음이 났다.
 #   차체 반길이가 2.25 m 라 앞범퍼가 X_MAX 에서 0.25 m 밖에 안 떨어진다.
 #   그런데 목표 허용오차(xy 0.35)를 다 쓰면 앞범퍼가 부지 경계를 0.10 m
@@ -164,7 +176,7 @@ START_POSE = (X_MIN + S(4.0), AISLE_S_C, math.pi / 4)  # 입차 시작 지점
 #   keepout(부지 밖)에 걸린다. 목표 영역 자체가 일부 무효인 셈이다.
 #   실측: 차가 (25.83, 20.43)까지 가서 앞범퍼가 경계를 0.08 m 넘었고,
 #   목표 1.18 m 앞에서 빠져나오지 못했다. (2026-09-03)
-EXIT_POSE = (X_MAX - S(4.0), AISLE_N_C, 0.0)           # 출차 최종 목표
+EXIT_POSE = (X_MAX - S(6.0), AISLE_N_C, 0.0)           # 출차 최종 목표
 QUEUE_POSE = (LANE_W_C, AISLE_S_C + S(3.0), math.pi / 2)  # 대기열 지점
 
 # --- 열 메타 ------------------------------------------------------------
@@ -317,6 +329,31 @@ def _pose_extent(x, y, th):
         xs.append(x + lx * c - ly * s)
         ys.append(y + lx * s + ly * c)
     return min(xs), max(xs), min(ys), max(ys)
+
+
+def check_exit_approach():
+    """동측 차로에서 북통로로 우회전해 출구로 붙는 것이 가능한가.
+
+    ! 가능하지 않다. 이 검사는 "불가능함" 을 확인하고, 대신 출구가 충분히
+      서쪽에 있어서 플래너가 서측 경로를 택하게 되는지를 본다.
+      (동측 차로 경유는 되돌아오는 거리가 생겨 명백히 길어져야 한다)
+    """
+    lane_c = X_MAX - LANE_W / 2.0
+    turn_end = lane_c + ROBOT_MIN_R                 # 우회전 종료 x
+    nose = turn_end + ROBOT_L / 2.0
+    passable = X_MAX - ROBOT_W / 2.0                # 253 대역 시작
+    backtrack = turn_end - EXIT_POSE[0]
+    print("  동측차로 우회전: 앞범퍼 %.2f vs 통과상한 %.2f (%s)"
+          % (nose, passable, "가능" if nose <= passable else "불가"))
+    print("  -> 출구는 북통로 서쪽 접근. 동측 경유 시 되돌아오는 거리 %.2f m"
+          % backtrack)
+    if backtrack < ROBOT_L:
+        print("경고: 되돌아오는 거리가 차체 길이(%.2f)보다 짧다. 플래너가"
+              % ROBOT_L)
+        print("      동측 차로 경유를 택할 수 있고, 그 회전은 실행 불가능하다.")
+        print("      EXIT_POSE 를 더 서쪽으로 (X_MAX 오프셋을 키울 것).")
+        raise SystemExit(1)
+
 
 
 def check_gate_poses():
@@ -1497,6 +1534,7 @@ def main(root):
     print("  맵 그리드   : %d x %d px @ %.3f m/px" % (MAP_W, MAP_H, MAP_RES))
     print("  최소회전반경: %.3f m" % ROBOT_MIN_R)
     check_gate_poses()
+    check_exit_approach()
     _m, _n = check_entry_turn()
     print("  입구 좌회전 여유: %.2f m (포락선 최동단 %.2f, 블록 %.2f)"
           % (_m, _n, BLOCK_X0))
