@@ -117,6 +117,23 @@ ROBOT_W = S(1.90)
 ROBOT_WHEELBASE = S(2.50)
 ROBOT_MAX_STEER = math.radians(35.0)
 ROBOT_MIN_R = ROBOT_WHEELBASE / math.tan(ROBOT_MAX_STEER)  # ≈ 3.57 m
+# ! 위 값은 **뒤축 기준**이다. 자전거 모델의 기준점이 뒤축이기 때문이다.
+#   그런데 Nav2 는 base_link 로 계획하고 명령하며, base_link 은 축거 중점이라
+#   뒤축보다 축거/2 앞이다. 같은 조향에서 base_link 이 그리는 반경은 더 크다.
+#
+#       R_base = hypot(R_min, 축거/2) = hypot(3.5704, 1.25) = 3.7829
+#
+#   실측으로 확인했다 (scripts/nav2_tests/turn_radius_test.py, 2026-09-07).
+#   정상 선회 중 base_link 의 슬립각이 뒤축 예측과 일치한다.
+#       v=1.0 wz=0.15 -> 실측 +9.69 deg  (뒤축 +10.62, base_link 0)
+#       v=1.0 wz=0.25 -> 실측 +15.95 deg (뒤축 +17.35, base_link 0)
+#
+#   Nav2 파라미터(Smac minimum_turning_radius, MPPI min_turning_r, wz_max)에는
+#   반드시 base_link 값을 넣어야 한다. 3.5704 를 넣으면 차가 실제로 못 내는
+#   6% 더 급한 경로를 계획하게 되고, 그만큼 코너에서 추종 오차가 커진다.
+#
+#   반면 기하 검사(회전 포락선 등)는 실제 차체 궤적을 다루므로 뒤축 값을 쓴다.
+ROBOT_MIN_R_BASE = math.hypot(ROBOT_MIN_R, ROBOT_WHEELBASE / 2.0)
 
 # --- 열(Row) 배치: 남 -> 북 ---------------------------------------------
 #   Aisle_S | Row A | Row B | Aisle_C | Row C | Row D | Aisle_N
@@ -1019,6 +1036,7 @@ def spots_json():
             "wheelbase": ROBOT_WHEELBASE,
             "max_steer_rad": ROBOT_MAX_STEER,
             "min_turning_radius": ROBOT_MIN_R,
+            "min_turning_radius_base_link": ROBOT_MIN_R_BASE,
         },
         "spots": [
             {
@@ -1550,13 +1568,13 @@ def nav2_yaml():
     fp_hw = ROBOT_W * 0.5 + S(0.05)
     vmax = S(1.60)          # 차량 능력치 상한 (velocity_smoother 용)
     goal_tol = GOAL_XY_TOL
-    aexp = 3.5 * ROBOT_MIN_R      # 해석적 확장 최대 길이
+    aexp = 3.5 * ROBOT_MIN_R_BASE   # 해석적 확장 최대 길이
     cvmax = S(1.00)         # 통로 주행 상한 (MPPI 용). 코너 추종을 위해 낮춤
     vrev = S(0.60)
-    wzmax = vmax / ROBOT_MIN_R
-    cwzmax = cvmax / ROBOT_MIN_R   # 최소회전반경과 정합되어야 한다
+    wzmax = vmax / ROBOT_MIN_R_BASE   # base_link 기준이어야 한다
+    cwzmax = cvmax / ROBOT_MIN_R_BASE   # base_link 기준
     return NAV2_YAML.format(
-        MIN_R=ROBOT_MIN_R, WB=ROBOT_WHEELBASE,
+        MIN_R=ROBOT_MIN_R_BASE, WB=ROBOT_WHEELBASE,
         STEER_DEG=math.degrees(ROBOT_MAX_STEER),
         START_X=START_POSE[0], START_Y=START_POSE[1], START_YAW=START_POSE[2],
         VMAX=vmax, VREV=vrev, WZMAX=wzmax, RES=MAP_RES,

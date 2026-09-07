@@ -303,6 +303,9 @@ def check_map_pkg(length, width, wheelbase, track, steer_limit, r_achievable,
         with open(spec_file, encoding='utf-8') as f:
             spec = json.load(f)['robot_spec']
         r_required = spec['min_turning_radius']
+        # ! Nav2 파라미터는 base_link 기준이라 물리 제원과 다르다.
+        #   base_link 이 축거/2 앞이라 hypot(R_min, 축거/2) 가 된다.
+        r_nav = spec.get('min_turning_radius_base_link', r_required)
         for key, mine, want in (('length', length, spec['length']),
                                 ('width', width, spec['width']),
                                 ('wheelbase', wheelbase, spec['wheelbase'])):
@@ -341,10 +344,13 @@ def check_map_pkg(length, width, wheelbase, track, steer_limit, r_achievable,
         if not m or r_required is None:
             continue
         val = float(m.group(1))
-        if abs(val - r_required) < 1e-2:
-            ok('%s %.3f == parking_spots.json' % (label, val))
+        if abs(val - r_nav) < 1e-2:
+            ok('%s %.3f == json 의 base_link 기준값' % (label, val))
+        elif abs(val - r_required) < 1e-2:
+            bad('%s %.3f 은 뒤축 기준값이다. base_link 기준 %.3f 이어야 한다'
+                % (label, val, r_nav))
         else:
-            bad('%s %.3f != %.3f' % (label, val, r_required))
+            bad('%s %.3f != %.3f' % (label, val, r_nav))
     m = re.search(r'footprint:\s*"\[\s*\[\s*([0-9.\-]+),\s*([0-9.\-]+)', txt)
     if m:
         fx, fy = float(m.group(1)), float(m.group(2))

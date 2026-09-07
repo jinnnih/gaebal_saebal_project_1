@@ -2,7 +2,7 @@
 # Ackermann 차량형 로봇용 Nav2 파라미터 (ROS2 Jazzy / Nav2 1.3+)
 #   전역: Smac Planner Hybrid-A*  (후진 포함 motion primitive)
 #   지역: MPPI Controller         (AckermannConstraint)
-# 최소회전반경 3.570 m  = 축거 2.500 / tan(35 deg)
+# 최소회전반경 3.783 m  = 축거 2.500 / tan(35 deg)
 
 amcl:
   ros__parameters:
@@ -140,7 +140,7 @@ controller_server:
       vx_max: 1.00
       vx_min: -0.60          # 후진 허용 — 발렛파킹 핵심
       vy_max: 0.0
-      wz_max: 0.280
+      wz_max: 0.264
       # ! 1 로 둔다. 2 로 올리면 연산이 배로 늘어 제어 루프가 목표
       #   주기를 못 맞춘다. 수렴을 더 얻는 것보다 제때 내는 게 낫다.
       iteration_count: 1
@@ -150,7 +150,7 @@ controller_server:
       gamma: 0.015
       motion_model: "Ackermann"
       AckermannConstraints:
-        min_turning_r: 3.570
+        min_turning_r: 3.783
       visualize: true
       TrajectoryVisualizer:
         trajectory_step: 5
@@ -280,8 +280,8 @@ planner_server:
       #   해석적 확장(Reeds-Shepp shot)이 거의 성공하지 못해서, 75 m 짜리
       #   경로를 전부 격자 탐색으로 푼다. 계획에 5.1 s 가 걸렸다.
       #   Nav2 권장은 대략 3.5 x R_min 이다.
-      analytic_expansion_max_length: 12.5
-      minimum_turning_radius: 3.570
+      analytic_expansion_max_length: 13.2
+      minimum_turning_radius: 3.783
       reverse_penalty: 2.1        # 낮출수록 후진 적극 사용 (주차 프로파일 1.3)
       change_penalty: 0.15
       non_straight_penalty: 1.20
@@ -348,8 +348,8 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
-    max_velocity: [1.60, 0.0, 0.448]
-    min_velocity: [-0.60, 0.0, -0.448]
+    max_velocity: [1.60, 0.0, 0.423]
+    min_velocity: [-0.60, 0.0, -0.423]
     max_accel: [1.2, 0.0, 2.0]
     max_decel: [-1.6, 0.0, -2.0]
     odom_topic: "odom"

@@ -12,7 +12,28 @@ ackermann_steering_controller 는 geometry_msgs/TwistStamped 를
   그대로 흘려보내면 컨트롤러가 조향각만 꺾은 채 멈춰 있고 Nav2 는
   "회전 중"이라 오판한다. 여기서 wz 를 0 으로 죽인다.
 * |wz| <= |v| / R_min.  최소회전반경보다 급한 요구는 잘라낸다.
-  (R_min = wheelbase / tan(max_steer) = 2.50 / tan(35deg) = 3.5704 m)
+  R_min 은 **base_link 기준** 3.7829 m 다. 차량 물리 제원(뒤축 기준)은
+  3.5704 지만 base_link 이 축거/2 앞이라 base_link 이 그리는 반경은
+  hypot(3.5704, 1.25) = 3.7829 가 된다.
+
+3차 역할 — **기준점 변환**:
+
+  Nav2 는 base_link 기준으로 (v, wz) 를 낸다. 그런데 자전거 모델의 기준점은
+  **뒤축**이고, ackermann_steering_controller 도 그 기준으로 해석한다
+  (base_frame_id: base_rear_axle). base_link 은 축거 중점이라 뒤축보다
+  1.25 m 앞이므로, 그대로 흘려보내면 차가 명령보다 빠르고 크게 돈다.
+
+  실측으로 확인했다 (scripts/nav2_tests/turn_radius_test.py, 2026-09-07).
+  정상 선회 중 base_link 의 슬립각(차체 방향과 진행 방향의 차):
+
+      명령 v=1.0 wz=0.15 -> 실측 +9.69 deg  (뒤축 예측 +10.62, base_link 예측 0)
+      명령 v=1.0 wz=0.25 -> 실측 +15.95 deg (뒤축 예측 +17.35, base_link 예측 0)
+
+  그래서 뒤축 기준으로 바꿔서 내보낸다.
+
+      v_rear = sqrt(v^2 - (wz * d)^2),   wz 는 그대로 (강체라 불변)
+
+  이러면 base_link 의 속도가 정확히 v, 반경이 정확히 v/wz 가 된다.
 * 전/후진 속도 상한 분리 (전진 1.60 / 후진 0.60 m/s).
 * 워치독 — 입력이 timeout 동안 없으면 0 을 계속 발행해 정지 유지.
 
@@ -45,7 +66,12 @@ class TwistToAckermann(Node):
                                '/ackermann_steering_controller/reference')
         self.declare_parameter('max_speed_forward', 1.60)
         self.declare_parameter('max_speed_reverse', 0.60)
-        self.declare_parameter('min_turning_radius', 3.5704)
+        # ! base_link 기준 값이다. 차량 물리 제원(뒤축 기준)은 3.5704 지만
+        #   base_link 이 축거/2 만큼 앞이라 base_link 이 그리는 최소 반경은
+        #   hypot(3.5704, 1.25) = 3.7829 다. Nav2 는 base_link 로 명령한다.
+        self.declare_parameter('min_turning_radius', 3.7829)
+        # base_link 에서 뒤축까지 거리 (= 축거/2). 0 이면 변환을 끈다.
+        self.declare_parameter('rear_axle_offset', 1.25)
         self.declare_parameter('timeout', 0.5)
         self.declare_parameter('publish_rate', 50.0)
 
@@ -56,6 +82,7 @@ class TwistToAckermann(Node):
         self.v_fwd = float(g('max_speed_forward').value)
         self.v_rev = float(g('max_speed_reverse').value)
         self.r_min = float(g('min_turning_radius').value)
+        self.d_rear = float(g('rear_axle_offset').value)
         self.timeout = float(g('timeout').value)
         rate = float(g('publish_rate').value)
 
@@ -108,8 +135,16 @@ class TwistToAckermann(Node):
                     'Spin 이 빠졌는지 확인할 것.')
             return 0.0, 0.0
 
+        # r_min 은 base_link 기준이므로 이 제한도 base_link 기준이다.
         wz_max = abs(vx) / self.r_min
         wz = max(-wz_max, min(wz_max, wz))
+
+        # base_link -> 뒤축 변환. 각속도는 강체라 그대로다.
+        if self.d_rear > 0.0:
+            inner = vx * vx - (wz * self.d_rear) ** 2
+            # 위 제한 덕에 inner 는 항상 양수지만, 파라미터를 손대는 경우를
+            # 대비해 막아 둔다.
+            vx = math.copysign(math.sqrt(inner), vx) if inner > 0.0 else 0.0
         return vx, wz
 
     # ---------------- 주기 발행 ----------------
@@ -126,7 +161,8 @@ class TwistToAckermann(Node):
 
         out = TwistStamped()
         out.header.stamp = now.to_msg()
-        out.header.frame_id = 'base_link'
+        # 변환 뒤이므로 뒤축 기준 트위스트다
+        out.header.frame_id = 'base_rear_axle'
         out.twist.linear.x = float(vx)
         out.twist.angular.z = float(wz)
         self.pub.publish(out)

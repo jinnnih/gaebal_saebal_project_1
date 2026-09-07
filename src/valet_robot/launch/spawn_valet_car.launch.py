@@ -102,7 +102,11 @@ def generate_launch_description():
                      'output_topic': '/ackermann_steering_controller/reference',
                      'max_speed_forward': 1.60,
                      'max_speed_reverse': 0.60,
-                     'min_turning_radius': 3.5704}])
+                     # ! base_link 기준 값. 차량 물리 제원(뒤축)은 3.5704 지만
+                     #   base_link 이 축거/2 앞이라 hypot(3.5704, 1.25) 다.
+                     #   Nav2 는 base_link 로 명령하므로 이 값이 맞다.
+                     'min_turning_radius': 3.7829,
+                     'rear_axle_offset': 1.25}])
 
     rviz = Node(
         package='rviz2', executable='rviz2', output='screen',
