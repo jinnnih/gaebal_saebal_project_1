@@ -261,9 +261,16 @@ planner_server:
       downsampling_factor: 1
       downsample_obstacle_heuristic: true
       allow_unknown: false
-      max_iterations: 1200000
+      # ! 1.2M / 5.0 s 로 되돌렸다가 되물렸다. 이유는 실측이다.
+      #   입구->출구 75 m 대각선이 어떤 회차엔 0.4 s 에 풀리는데 어떤
+      #   회차엔 "exceeded maximum iterations" 로 실패한다. 경계값이었다.
+      #   한 번 실패하면 BT 가 BackUp 복구를 돌려 차가 게이트 쪽으로 밀리고,
+      #   거기서 또 실패해 빠져나오지 못한다 (3회 연속 출발점에서 실패).
+      #   실패까지 5~9 s 걸리는 걸 보면 1.2M 회에 4~5 s 라, max_planning_time
+      #   5.0 과 거의 같은 지점에서 잘린다. 둘 다 올려야 의미가 있다.
+      max_iterations: 2000000
       max_on_approach_iterations: 1200
-      max_planning_time: 5.0
+      max_planning_time: 8.0
       motion_model_for_search: "REEDS_SHEPP"   # 전진+후진 (DUBIN은 전진만)
       # 72(5도) -> 64(5.6도). 탐색 공간이 그만큼 줄고, 최소회전반경
       # 3.57 m 짜리 차량에 5.6도 분해능이면 충분하다.
