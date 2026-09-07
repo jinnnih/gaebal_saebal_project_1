@@ -2,6 +2,14 @@ cmake_minimum_required(VERSION 3.8)
 project(valet_robot)
 
 find_package(ament_cmake REQUIRED)
+find_package(rosidl_default_generators REQUIRED)
+find_package(action_msgs REQUIRED)
+
+# 주차/출차 기동 액션. 별도 인터페이스 패키지를 두지 않고 여기서 낸다.
+rosidl_generate_interfaces(${PROJECT_NAME}
+  "action/Park.action"
+  DEPENDENCIES action_msgs
+)
 
 install(DIRECTORY
   urdf
@@ -17,10 +25,10 @@ install(DIRECTORY
 install(PROGRAMS
   scripts/twist_to_ackermann.py
   scripts/ackermann_teleop_key.py
-  scripts/demo_drive.py
   tools/check_model.py
   tools/smoke_probe.py
   tools/preview_model.py
+  scripts/park_action_server.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

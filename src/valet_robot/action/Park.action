@@ -1,0 +1,31 @@
+# 주차 / 출차 기동 액션.
+#
+# 계획서의 ParkManeuver / UnparkManeuver 에 해당한다.
+# Nav2 는 통로까지만 데려오고, 주차면 진입은 이 액션이 맡는다.
+# (keepout 필터가 주차면 내부를 막고 있어 플래너가 그 안으로 경로를 못 낸다 - #7)
+
+# ---------------- Goal ----------------
+string spot_id          # 주차면 ID. parking_spots.json 의 id (예: "A08")
+uint8 mode              # PARK 또는 UNPARK
+uint8 PARK=0
+uint8 UNPARK=1
+---
+# ---------------- Result ----------------
+bool success
+string message          # 실패 사유 (성공이면 빈 문자열)
+
+# 아래는 mode=PARK 일 때만 채워진다
+float64 err_m           # goal_pose 대비 위치오차
+float64 err_deg         # 방향오차
+bool inside_rect        # 주차면 rect 안에 들어갔는가
+
+int32 shunts_nav        # 접근(Nav2) 구간의 전후진 전환 횟수
+int32 shunts_park       # 주차 기동 구간의 전후진 전환 횟수
+float64 duration_s
+---
+# ---------------- Feedback ----------------
+string phase            # APPROACH ALIGN TURN TRACK ESCAPE EXIT
+float64 x
+float64 y
+float64 yaw_deg
+float64 remaining_m     # 현재 단계의 남은 거리 (모르면 -1)
