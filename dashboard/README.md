@@ -4,12 +4,14 @@
 설계 근거는 이슈 #8, 토픽 계약은 #9.
 
 ```
-frontend/   React 19 + Vite 7 + TypeScript
-backend/    Express 5 + mysql2
-db/         MySQL 스키마 + seed
+frontend/   React 19 + Vite 7 + TypeScript      → frontend/README.md
+backend/    Express 5 + mysql2 + rosbridge 수집기 → backend/README.md
+db/         MySQL 스키마 + seed                  → db/README.md
+tools/      개발용 도구 (rosbridge 목 서버)
 ```
 
 npm workspaces 로 묶여 있어 루트에서 `npm install` 한 번이면 된다.
+각 디렉터리의 README 에 그 안의 구조와 설계 의도를 적어 뒀다.
 
 ---
 
@@ -150,7 +152,7 @@ ROSBRIDGE_URL=ws://172.30.1.11:9090 npm run dev:api
 
 ## 진행 상황
 
-- [x] rosbridge WebSocket 수집기 (`mission_event` / `spot_state` 적재) — `backend/src/collector.ts`
+- [x] rosbridge WebSocket 수집기 (`mission_event` / `spot_state` 적재) — `backend/src/ros/collector.ts`
 - [x] `POST /api/requests` 에서 `/valet/request` 토픽 발행
 - [ ] 로봇 위치 오버레이 (`/amcl_pose`) — 2주차 Nav2 이후
 - [ ] 폴링을 WebSocket 구독으로 교체

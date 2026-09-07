@@ -1,4 +1,4 @@
-import type { Layout, LotVersion, Metrics, RequestRow, SpotState, SpotStatus } from '../types.ts';
+import type { Layout, LotVersion, Metrics, RequestRow, SpotState, SpotStatus } from '../types/index.ts';
 
 const SWATCH: Record<SpotStatus, string> = {
   FREE: 'var(--free)', RESERVED: 'var(--reserved)',

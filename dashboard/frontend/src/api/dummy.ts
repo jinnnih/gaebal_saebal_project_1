@@ -5,7 +5,7 @@
  * 않으므로(#9 규석 답변), 계약대로 생긴 데이터를 만들어 UI 를 먼저 검증한다.
  * 레이아웃(좌표)은 더미가 아니라 언제나 ks 브랜치의 원본을 쓴다.
  */
-import type { Layout, Metrics, RequestRow, SpotState } from './types.ts';
+import type { Layout, Metrics, RequestRow, SpotState } from '../types/index.ts';
 
 const TAGS = ['12가3456', '34나7890', '56다1234', '78라5678', '90마9012',
               '11바3344', '22사5566', '33아7788'];

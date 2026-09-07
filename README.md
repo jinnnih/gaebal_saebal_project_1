@@ -39,18 +39,34 @@ git show origin/ks:src/parking_lot_world/config/parking_spots.json
 
 두 사람의 산출물이 한 레포에 공존하되 디렉터리로 분리된다.
 
-```
-src/                        ROS 2 colcon 워크스페이스 (ks 브랜치)
-├── parking_lot_world/      주차장 월드 · 맵 · Nav2 설정 · 주차면 좌표
-└── valet_robot/            차량형 로봇 URDF · ros2_control · 텔레옵
+### `ks` — 로봇 / Nav2
 
-dashboard/                  관제 대시보드 (hj 브랜치)
-├── frontend/               React + Vite + TypeScript
-├── backend/                Express + mysql2
-└── db/                     MySQL 스키마 · seed
+```
+scripts/                    시뮬 기동·정리·스모크 테스트
+└── nav2_tests/             주행 시험 도구 (mppi_probe, path_check …)
+src/                        colcon 워크스페이스
+├── parking_lot_world/      주차장 월드 · 맵 · Nav2 설정 · 주차면 좌표
+│   ├── config/  launch/  maps/  worlds/  behavior_trees/  tools/
+└── valet_robot/            차량형 로봇
+    ├── urdf/  config/  launch/  meshes/  scripts/  tools/
 ```
 
 `src/` 를 colcon 워크스페이스 루트로 쓰는 구조라 ROS 패키지는 반드시 그 아래에 둔다.
+
+### `hj` — 관제 대시보드
+
+```
+dashboard/
+├── frontend/               React 19 + Vite 7
+│   └── src/  api/  hooks/  components/  types/  styles/
+├── backend/                Express 5 + mysql2
+│   └── src/  routes/  ros/  middleware/
+├── db/                     MySQL 스키마 · seed
+└── tools/                  rosbridge 목 서버
+```
+
+디렉터리마다 README 를 둬서 그 안의 구조와 설계 의도를 적는다.
+`backend/src/ros/contract.ts` 가 #9 토픽 계약을 코드로 옮긴 유일한 곳이다.
 
 ---
 

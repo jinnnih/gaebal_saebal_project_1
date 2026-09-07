@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { Layout, SpotState, SpotStatus } from '../types.ts';
+import type { Layout, SpotState, SpotStatus } from '../types/index.ts';
 
 const FILL: Record<SpotStatus, string> = {
   FREE: 'var(--free)', RESERVED: 'var(--reserved)',

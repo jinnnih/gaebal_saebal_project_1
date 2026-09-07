@@ -4,7 +4,7 @@
  * 레이아웃은 언제나 실제 원본(/parking_spots.json)에서 받는다.
  * DB 를 쓰는 나머지는 백엔드가 없으면 더미로 대체하고, 그 사실을 화면에 표시한다.
  */
-import type { Layout, Metrics, RequestRow, SpotState, LotVersion } from './types.ts';
+import type { Layout, Metrics, RequestRow, SpotState, LotVersion } from '../types/index.ts';
 import { dummyMetrics, dummyRequests, dummySpotStates } from './dummy.ts';
 
 export type Source = 'live' | 'dummy';

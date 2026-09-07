@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { RequestRow, RequestStatus } from '../types.ts';
+import type { RequestRow, RequestStatus } from '../types/index.ts';
 
 const ACTIVE: RequestStatus[] = ['PENDING', 'ASSIGNED', 'NAVIGATING', 'PARKING', 'UNPARKING'];
 const KO: Record<RequestStatus, string> = {
