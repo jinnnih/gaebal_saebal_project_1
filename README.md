@@ -78,7 +78,7 @@ dashboard/
 (`goal_pose`, `prepark_pose`, `aisle_point`), 기둥, 해치존이 들어있다.
 
 대시보드는 이 파일을 그대로 읽어 도면을 그리고, **DB 에는 복사하지 않는다.**
-좌표가 바뀌는 경우(#6) DB 사본이 조용히 어긋나기 때문이다. 대신 파일의 sha256 을
+좌표가 바뀌면(#13 에서 실제로 통로를 넓혀 재생성했다) DB 사본이 조용히 어긋나기 때문이다. 대신 파일의 sha256 을
 `lot_version.checksum` 에 저장해 재생성을 감지한다.
 
 기하를 바꾸려면 `tools/generate_parking_lot.py` 를 고쳐 재생성한다.
@@ -110,7 +110,13 @@ source install/setup.bash
 ros2 launch valet_robot valet_sim.launch.py rviz:=true
 ```
 
-Gazebo GUI 는 VM 에서 RTF 0.17 까지 떨어지므로 헤드리스 + RViz 를 권장한다. 자세한 내용은 #4.
+서버와 GUI 를 별개 프로세스로 띄운다. #12 에서 GLX + llvmpipe 경로를 찾아
+깜빡임 없이 서버 RTF 1.088, 라이다 유효 프레임 100% 가 나온다.
+
+```bash
+bash scripts/run_sim.sh     # 터미널 1 — 서버 + 라이다 (헤드리스)
+bash scripts/show_gui.sh    # 터미널 2 — GUI 창
+```
 
 ### 관제 대시보드 (macOS / Linux)
 
@@ -137,8 +143,11 @@ npm run dev:web             # 터미널 2 — http://localhost:5173
 |---|---|
 | #3 | Humble → Jazzy 전환 경위 |
 | #4 | VM Gazebo 렌더링 문제와 RTF 측정값 |
-| #6 | 최소 회전반경과 통로 폭 (URDF 확정으로 해소) |
+| #6 | 최소 회전반경과 통로 폭 — #13 으로 해소 |
 | #7 | keepout 필터를 켜면 주차가 막히는 함정 |
 | #8 | 대시보드 DB 설계 |
 | #9 | rosbridge 토픽 계약 |
 | #10 | 로봇 1주차 완료 · 실측 8/8 |
+| #11 | 대시보드 1차 구현 |
+| #12 | 라이다 렌더링 해결 · 조향 조인트 순서 버그 |
+| #13 | 통로 확장 재생성 · 코너 실패 원인 5건 (**좌표 변경**) |
