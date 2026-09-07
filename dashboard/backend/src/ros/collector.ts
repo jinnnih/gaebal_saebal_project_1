@@ -74,6 +74,13 @@ async function onMissionStatus(m: MissionStatusMsg) {
     return;
   }
 
+  // FindParkingSpot 이 고른 면을 요청에 붙인다. 큐 UI 가 이 값을 보여준다.
+  const spotId = (m.payload as any)?.spot_id;
+  if (spotId && (m.event === 'SPOT_SELECTED' || m.event === 'SPOT_RESERVED')) {
+    await pool.execute(
+      'UPDATE valet_request SET assigned_spot_id = ? WHERE id = ?', [spotId, m.request_id]);
+  }
+
   const next = STATUS_OF[m.event];
   if (next) {
     const done = TERMINAL_STATUS.includes(next);
@@ -85,20 +92,31 @@ async function onMissionStatus(m: MissionStatusMsg) {
       done ? [next, ts, ts, m.request_id] : [next, ts, m.request_id]);
   }
 
-  if (m.event === 'PARK_DONE') await writeMetric(m, ts);
+  // 성공만 기록하면 성공률이 늘 100% 가 된다. 실패도 남겨야 지표가 의미를 가진다.
+  if (m.event === 'PARK_DONE' || m.event === 'FAILED') {
+    await writeMetric(m, ts, m.event === 'PARK_DONE');
+  }
   console.log(`[수집기] #${m.request_id} seq ${m.seq} ${m.event}`);
 }
 
-/** 정차 오차는 로봇이 계산해 보낸다 (#9 Q7). 여기서는 소요시간만 더한다. */
-async function writeMetric(m: MissionStatusMsg, ts: string) {
+/**
+ * 정차 오차는 로봇이 계산해 보낸다 (#9 Q7). 여기서는 소요시간만 더한다.
+ *
+ * `parked` 는 로봇이 주차 완료를 선언했는지다. 허용오차(0.12 m) 이내인지는
+ * 별개로 판정해서 `succeeded` 에 넣는다 — 완료를 선언했어도 오차가 크면 실패다.
+ */
+async function writeMetric(m: MissionStatusMsg, ts: string, parked: boolean) {
   const p = (m.payload ?? {}) as Record<string, number>;
-  const [[start]] = await pool.query<any>(
-    `SELECT ts FROM mission_event
-      WHERE request_id = ? AND event = 'REQUEST_ACCEPTED' ORDER BY seq LIMIT 1`,
-    [m.request_id]);
-  const duration = start
-    ? (new Date(ts + 'Z').getTime() - new Date(start.ts).getTime()) / 1000
-    : null;
+
+  // 소요시간은 MySQL 안에서 계산한다. JS 로 빼면 DATETIME 문자열을 다시 파싱해야 하는데
+  // 'YYYY-MM-DD HH:MM:SS.mmm' 은 ISO 가 아니라서 한쪽이 로컬시간으로 해석돼 어긋난다.
+  const [[row]] = await pool.query<any>(
+    `SELECT TIMESTAMPDIFF(MICROSECOND,
+              (SELECT ts FROM mission_event
+                WHERE request_id = ? AND event = 'REQUEST_ACCEPTED'
+                ORDER BY seq LIMIT 1), ?) / 1000000 AS dur`,
+    [m.request_id, ts]);
+  const duration = row?.dur ?? null;
   const err = p.err_m ?? null;
 
   await pool.execute(
@@ -110,8 +128,9 @@ async function writeMetric(m: MissionStatusMsg, ts: string) {
        heading_err_deg = VALUES(heading_err_deg), shunt_count = VALUES(shunt_count),
        succeeded = VALUES(succeeded)`,
     [m.request_id, duration, err, p.heading_deg ?? null, p.shunts ?? null,
-     err != null && err <= PARK_TOLERANCE_M ? 1 : 0]);
-  console.log(`  └ park_metric — 오차 ${err} m / ${duration?.toFixed(1)}초 / 전후진 ${p.shunts ?? '?'}회`);
+     parked && err != null && err <= PARK_TOLERANCE_M ? 1 : 0]);
+  console.log(`  └ park_metric — ${parked ? '완료' : '실패'} / 오차 ${err ?? '?'} m`
+            + ` / ${duration != null ? Number(duration).toFixed(1) : '?'}초 / 전후진 ${p.shunts ?? '?'}회`);
 }
 
 /** API 서버가 요청을 만들 때 호출한다. */

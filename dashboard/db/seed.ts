@@ -54,7 +54,11 @@ const db = await mysql.createConnection({
   password: process.env.DB_PASSWORD ?? '',
   database: process.env.DB_NAME ?? 'valet',
   multipleStatements: false,
+  timezone: 'Z',
 });
+
+// 백엔드와 같은 시간대로 맞춘다. 섞이면 소요시간 계산이 어긋난다.
+await db.query("SET time_zone = '+00:00'");
 
 console.log(`레이아웃 원본 : ${source}`);
 console.log(`checksum     : ${checksum.slice(0, 16)}…`);
