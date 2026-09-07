@@ -180,7 +180,65 @@ class Park(Node):
             self.cmd.publish(Twist()); rclpy.spin_once(self, timeout_sec=0.02)
         return self.pose()
 
-    # ---------------- 2단계: 직선 후진 ----------------
+    # ---------------- 3단계: 중심선 추종 후진 ----------------
+    def reverse_track(self, gx, gy, gyaw, speed=0.22, limit=90.0,
+                      k_e=0.35, k_th=2.0, r_min=3.7829, taper=2.0):
+        """주차면 중심선을 따라가며 후진한다.
+
+        ! 눈 감고 곧게 후진하면 선회 후 남은 횡오차가 그대로 남는다.
+          실측 0.54 m 중 대부분이 이것이었다. 후진하는 4 m 동안 오차를
+          줄일 수 있는데 안 쓰고 있었다.
+
+        제어칙 (s = 후진 거리, phi = 목표 방향에서의 이탈각):
+
+            차는 헤딩 반대로 가므로  d(pos)/ds = -(cos th, sin th)
+            횡오차를 e = (pos - goal) . (-sin gyaw, cos gyaw) 로 두면
+            de/ds = sin(gyaw - th) = -sin(phi) ~= -phi
+
+            phi_cmd = k_e * e  로 두면  de/ds = -k_e * e  -> 지수 수렴.
+            (전진이면 부호가 반대라 발산한다. 후진 전용이다)
+
+        ! 종단 정렬이 필요하다. phi_cmd 를 끝까지 살려 두면 e 가 0 이 아닌
+          채로 주차면에 들어가 차가 기울어진다. 실측으로 방향오차 -33.7 deg
+          가 났다. 남은 거리가 taper 이내면 phi_cmd 를 0 으로 줄여 차를
+          중심선에 나란히 세운다.
+
+        ! 게인도 낮췄다 (0.60 -> 0.35). 후진 조향은 응답이 느려서 위치 루프가
+          빠르면 진동한다. 선회가 잘 끝나면 (오차 0.1 m) 원래 보정할 게 별로
+          없다. 이 항은 선회가 어긋났을 때를 위한 보험이다.
+        """
+        ax, ay = math.cos(gyaw), math.sin(gyaw)          # 주차면 축
+        lx, ly = -math.sin(gyaw), math.cos(gyaw)         # 횡방향
+        tw = Twist()
+        t0 = time.time()
+        start = self.pose()
+        travelled = 0.0
+        while rclpy.ok() and time.time() - t0 < limit:
+            c = self.pose()
+            if c is None:
+                rclpy.spin_once(self, timeout_sec=0.05); continue
+            dx, dy = c[0] - gx, c[1] - gy
+            proj = dx * ax + dy * ay                     # 축방향 남은 거리
+            e = dx * lx + dy * ly                        # 횡오차
+            if proj <= 0.03:
+                break
+            travelled = math.dist(c[:2], start[:2])
+            if travelled > 8.0:                          # 안전장치
+                break
+            phi = max(-0.25, min(0.25, k_e * e))
+            phi *= min(1.0, proj / taper)      # 종단에서 중심선과 나란히
+            th_cmd = gyaw + phi
+            psi = math.atan2(math.sin(th_cmd - c[2]), math.cos(th_cmd - c[2]))
+            w_max = abs(speed) / r_min
+            tw.linear.x = -abs(speed) * (0.5 if proj < 0.5 else 1.0)
+            tw.angular.z = max(-w_max, min(w_max, k_th * psi))
+            self.cmd.publish(tw)
+            rclpy.spin_once(self, timeout_sec=0.05)
+        for _ in range(25):
+            self.cmd.publish(Twist()); rclpy.spin_once(self, timeout_sec=0.02)
+        return travelled
+
+    # ---------------- (예전) 직선 후진 ----------------
     def reverse(self, dist, speed=0.25):
         """차체 방향 기준으로 dist 만큼 곧게 후진한다."""
         start = self.pose()
@@ -272,8 +330,8 @@ def main():
 
     rest = abs(gy - c[1])
     print()
-    print('[3/3] 직선 후진 %.2f m — 주차면 안으로' % rest)
-    moved = n.reverse(rest)
+    print('[3/3] 중심선 추종 후진 %.2f m — 횡오차를 줄이며 들어간다' % rest)
+    moved = n.reverse_track(gx, gy, gyaw)
     c = n.pose()
     err = math.dist(c[:2], (gx, gy))
     dyaw = math.degrees(math.atan2(math.sin(c[2] - gyaw),
