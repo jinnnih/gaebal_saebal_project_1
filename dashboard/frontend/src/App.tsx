@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useValetState } from './hooks/useValetState.ts';
+import { useRobotPose } from './hooks/useRobotPose.ts';
 import { cancelRequest, createRequest } from './api/client.ts';
 import { Header } from './components/Header.tsx';
 import { ParkingMap } from './components/ParkingMap.tsx';
@@ -9,6 +10,8 @@ import { RequestQueue } from './components/RequestQueue.tsx';
 export default function App() {
   const { layout, states, requests, metrics, lotVersion, source, error, refresh } = useValetState();
   const [selected, setSelected] = useState<string | null>(null);
+  // 더미 모드에서는 로봇 위치를 받을 곳이 없다
+  const pose = useRobotPose(source === 'live');
 
   if (error) return <div className="fatal">레이아웃을 불러오지 못했습니다: {error}</div>;
   if (!layout || !metrics) return <div className="loading">불러오는 중…</div>;
@@ -28,7 +31,7 @@ export default function App() {
 
       <main>
         <div className="card">
-          <ParkingMap layout={layout} states={states}
+          <ParkingMap layout={layout} states={states} pose={pose}
                       selected={selected} onSelect={setSelected} />
         </div>
 

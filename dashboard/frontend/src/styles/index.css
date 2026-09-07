@@ -3,6 +3,7 @@
   --fg: #e6edf3; --muted: #8b949e;
   --free: #2ea043; --occupied: #57606a; --reserved: #d29922; --blocked: #f85149;
   --accent: #58a6ff; --exit: #a371f7;
+  --robot: #39d0d8; --robot-line: #0d1117;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }

@@ -6,12 +6,22 @@
 import { pool, currentLotVersion } from '../db.ts';
 import { publish, startRosClient } from './client.ts';
 import {
-  PARK_TOLERANCE_M, STATUS_OF, TERMINAL_STATUS, TOPIC,
-  type MissionStatusMsg, type SpotStatesMsg, type ValetRequestMsg,
+  PARK_TOLERANCE_M, STATUS_OF, TERMINAL_STATUS, TOPIC, toRobotPose,
+  type MissionStatusMsg, type RobotPose, type SpotStatesMsg, type ValetRequestMsg,
 } from './contract.ts';
 
 let versionId: number | null = null;
 let warnedChecksum = '';
+
+/**
+ * 로봇 위치는 DB 에 넣지 않는다.
+ *
+ * 초당 수십 건이 들어오는데 남겨도 쓸 데가 없고 테이블만 부풀린다.
+ * 최신값 하나만 메모리에 두고 대시보드가 API 로 가져간다.
+ * 경로 리플레이가 필요해지면 그때 별도 테이블을 만든다 (#8 열린 질문).
+ */
+let latestPose: RobotPose | null = null;
+export const getRobotPose = () => latestPose;
 
 const toMysqlTime = (iso?: string) =>
   (iso ? new Date(iso) : new Date()).toISOString().slice(0, 23).replace('T', ' ');
@@ -150,7 +160,13 @@ export async function startCollector() {
     versionId = v.id;
     console.log(`[수집기] lot_version #${v.id} (${v.checksum.slice(0, 8)}) 기준`);
 
-    startRosClient(async (topic, body) => {
+    startRosClient(async (topic, msg) => {
+      // 로봇 위치만 표준 메시지고 나머지는 std_msgs/String 에 실린 JSON 이다.
+      if (topic === TOPIC.robotPose) {
+        latestPose = toRobotPose(msg) ?? latestPose;
+        return;
+      }
+      const body = JSON.parse(msg?.data ?? '{}');
       if (topic === TOPIC.spotStates) await onSpotStates(body);
       else if (topic === TOPIC.missionStatus) await onMissionStatus(body);
     });

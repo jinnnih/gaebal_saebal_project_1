@@ -1,0 +1,194 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200" font-family="'Helvetica Neue', Helvetica, 'Apple SD Gothic Neo', sans-serif">
+<rect width="1200" height="1200" fill="#0d1117"/>
+<text x="28" y="46" fill="#e6edf3" font-size="24" font-weight="600">발렛파킹 관제 대시보드</text>
+<text x="28" y="74" fill="#8b949e" font-size="15">B1_parking_lot · 주차면 54면 · 공차 30면 · 점유율 44%</text>
+<line x1="0" y1="96" x2="1200" y2="96" stroke="#30363d"/>
+<svg x="20" y="112" width="840" height="1070" viewBox="-29.2 -24.5 58.4 49" preserveAspectRatio="xMidYMid meet">
+<g transform="scale(1,-1)">
+<rect x="-28" y="-23.3" width="56" height="46.6" fill="#0b0f14" stroke="#30363d" stroke-width=".12"/>
+<rect x="-15" y="-15.3" width="2.5" height="5.4" fill="rgba(139,148,158,.10)" stroke="#484f58" stroke-width=".07" stroke-dasharray=".5 .35"/>
+<rect x="-10" y="-15.3" width="2.5" height="5.4" fill="rgba(139,148,158,.10)" stroke="#484f58" stroke-width=".07" stroke-dasharray=".5 .35"/>
+<rect x="-17.5" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-12.5" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-7.5" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-5" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-2.5" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="0" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="2.5" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="5" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="7.5" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="10" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="12.5" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="15" y="-15.3" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-17.5" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-15" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-12.5" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-10" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-7.5" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-5" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-2.5" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="0" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="2.5" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="5" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="7.5" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="10" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="12.5" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="15" y="-9.9" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-17.5" y="4.5" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-15" y="4.5" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-12.5" y="4.5" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-10" y="4.5" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-7.5" y="4.5" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-5" y="4.5" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-2.5" y="4.5" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="0" y="4.5" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="2.5" y="4.5" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="5" y="4.5" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="7.5" y="4.5" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="10" y="4.5" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="12.5" y="4.5" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="15" y="4.5" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-17.5" y="9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-15" y="9.9" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-12.5" y="9.9" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-10" y="9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-7.5" y="9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-5" y="9.9" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-2.5" y="9.9" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="0" y="9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="2.5" y="9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="5" y="9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="7.5" y="9.9" width="2.5" height="5.4" rx=".18" fill="#57606a" fill-opacity="0.55" stroke="#0d1117" stroke-width=".09"/>
+<rect x="10" y="9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="12.5" y="9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="15" y="9.9" width="2.5" height="5.4" rx=".18" fill="#2ea043" fill-opacity="0.78" stroke="#0d1117" stroke-width=".09"/>
+<rect x="-17.75" y="-10.15" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="-12.75" y="-10.15" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="-7.75" y="-10.15" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="-2.75" y="-10.15" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="2.25" y="-10.15" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="7.25" y="-10.15" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="12.25" y="-10.15" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="17.25" y="-10.15" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="-17.75" y="9.65" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="-12.75" y="9.65" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="-7.75" y="9.65" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="-2.75" y="9.65" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="2.25" y="9.65" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="7.25" y="9.65" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="12.25" y="9.65" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<rect x="17.25" y="9.65" width="0.5" height="0.5" fill="#8b949e" stroke="#c9d1d9" stroke-width=".04"/>
+<circle cx="-24" cy="-19.3" r=".75" fill="#58a6ff" fill-opacity=".25" stroke="#58a6ff" stroke-width=".12"/>
+<circle cx="22" cy="19.3" r=".75" fill="#a371f7" fill-opacity=".25" stroke="#a371f7" stroke-width=".12"/>
+<g transform="translate(-24 -19.3) rotate(45)">
+  <rect x="-2.25" y="-0.95" width="4.5" height="1.9" rx=".25" fill="#39d0d8" fill-opacity=".85" stroke="#0d1117" stroke-width=".1"/>
+  <path d="M 2.15 0 L 1.35 0.7 L 1.35 -0.7 Z" fill="#0d1117"/>
+</g>
+</g>
+<text x="-16.25" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A01</text>
+<text x="-16.25" y="14.3" text-anchor="middle" font-size=".62" font-weight="600" fill="#0d1117">장애인</text>
+<text x="-11.25" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A03</text>
+<text x="-11.25" y="14.3" text-anchor="middle" font-size=".62" font-weight="600" fill="#0d1117">장애인</text>
+<text x="-6.25" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A05</text>
+<text x="-3.75" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A06</text>
+<text x="-1.25" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A07</text>
+<text x="1.25" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A08</text>
+<text x="3.75" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A09</text>
+<text x="6.25" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A10</text>
+<text x="8.75" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A11</text>
+<text x="11.25" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A12</text>
+<text x="13.75" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A13</text>
+<text x="16.25" y="12.950000000000001" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">A14</text>
+<text x="-16.25" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B01</text>
+<text x="-13.75" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B02</text>
+<text x="-11.25" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B03</text>
+<text x="-8.75" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B04</text>
+<text x="-6.25" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B05</text>
+<text x="-3.75" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B06</text>
+<text x="-1.25" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B07</text>
+<text x="1.25" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B08</text>
+<text x="3.75" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B09</text>
+<text x="6.25" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B10</text>
+<text x="8.75" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B11</text>
+<text x="11.25" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B12</text>
+<text x="13.75" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B13</text>
+<text x="16.25" y="7.55" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">B14</text>
+<text x="-16.25" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C01</text>
+<text x="-13.75" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C02</text>
+<text x="-11.25" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C03</text>
+<text x="-8.75" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C04</text>
+<text x="-6.25" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C05</text>
+<text x="-3.75" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C06</text>
+<text x="-1.25" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C07</text>
+<text x="1.25" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C08</text>
+<text x="3.75" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C09</text>
+<text x="6.25" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C10</text>
+<text x="8.75" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C11</text>
+<text x="11.25" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C12</text>
+<text x="13.75" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C13</text>
+<text x="16.25" y="-6.8500000000000005" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">C14</text>
+<text x="-16.25" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D01</text>
+<text x="-13.75" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D02</text>
+<text x="-11.25" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D03</text>
+<text x="-8.75" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D04</text>
+<text x="-6.25" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D05</text>
+<text x="-3.75" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D06</text>
+<text x="-1.25" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D07</text>
+<text x="1.25" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D08</text>
+<text x="3.75" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D09</text>
+<text x="6.25" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D10</text>
+<text x="8.75" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D11</text>
+<text x="11.25" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D12</text>
+<text x="13.75" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D13</text>
+<text x="13.75" y="-10.900000000000002" text-anchor="middle" font-size=".62" font-weight="600" fill="#0d1117">EV</text>
+<text x="16.25" y="-12.250000000000002" text-anchor="middle" font-size=".95" font-weight="700" fill="#0d1117">D14</text>
+<text x="16.25" y="-10.900000000000002" text-anchor="middle" font-size=".62" font-weight="600" fill="#0d1117">EV</text>
+<text x="-24" y="22.3" text-anchor="middle" font-size=".95" font-weight="700" fill="#58a6ff">입구</text>
+<text x="22" y="-16.3" text-anchor="middle" font-size=".95" font-weight="700" fill="#a371f7">출구</text>
+</svg>
+<rect x="884" y="112" width="292" height="148" rx="8" fill="#161b22" stroke="#30363d"/>
+<text x="900" y="138" fill="#8b949e" font-size="11.5" font-weight="600" letter-spacing="1">점유 현황</text>
+<rect x="900" y="153" width="10" height="10" rx="2" fill="#2ea043"/>
+<text x="918" y="162" fill="#e6edf3" font-size="13.5">공차</text>
+<text x="1160" y="162" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">30</text>
+<rect x="900" y="179" width="10" height="10" rx="2" fill="#57606a"/>
+<text x="918" y="188" fill="#e6edf3" font-size="13.5">점유</text>
+<text x="1160" y="188" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">24</text>
+<rect x="900" y="205" width="10" height="10" rx="2" fill="#d29922"/>
+<text x="918" y="214" fill="#e6edf3" font-size="13.5">예약</text>
+<text x="1160" y="214" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">0</text>
+<rect x="900" y="231" width="10" height="10" rx="2" fill="#f85149"/>
+<text x="918" y="240" fill="#e6edf3" font-size="13.5">차단</text>
+<text x="1160" y="240" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">0</text>
+<rect x="884" y="274" width="292" height="200" rx="8" fill="#161b22" stroke="#30363d"/>
+<text x="900" y="300" fill="#8b949e" font-size="11.5" font-weight="600" letter-spacing="1">정량 지표</text>
+<text x="900" y="324" fill="#e6edf3" font-size="13.5">완료 요청</text>
+<text x="1160" y="324" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">10건</text>
+<text x="900" y="350" fill="#e6edf3" font-size="13.5">성공률</text>
+<text x="1160" y="350" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">80%</text>
+<text x="900" y="376" fill="#e6edf3" font-size="13.5">허용오차 0.12m 이내</text>
+<text x="1160" y="376" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">80%</text>
+<text x="900" y="402" fill="#e6edf3" font-size="13.5">평균 소요</text>
+<text x="1160" y="402" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">27.3초</text>
+<text x="900" y="428" fill="#e6edf3" font-size="13.5">평균 정차오차</text>
+<text x="1160" y="428" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">0.087 m</text>
+<text x="900" y="454" fill="#e6edf3" font-size="13.5">평균 전후진</text>
+<text x="1160" y="454" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">1.70회</text>
+<rect x="884" y="488" width="292" height="174" rx="8" fill="#161b22" stroke="#30363d"/>
+<text x="900" y="514" fill="#8b949e" font-size="11.5" font-weight="600" letter-spacing="1">레이아웃</text>
+<text x="900" y="538" fill="#e6edf3" font-size="13.5">크기</text>
+<text x="1160" y="538" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">56 × 46.6 m</text>
+<text x="900" y="564" fill="#e6edf3" font-size="13.5">주차면</text>
+<text x="1160" y="564" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">54면</text>
+<text x="900" y="590" fill="#e6edf3" font-size="13.5">기둥</text>
+<text x="1160" y="590" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">16개</text>
+<text x="900" y="616" fill="#e6edf3" font-size="13.5">최소회전반경</text>
+<text x="1160" y="616" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">3.57 m</text>
+<text x="900" y="642" fill="#e6edf3" font-size="13.5">lot_version</text>
+<text x="1160" y="642" text-anchor="end" fill="#e6edf3" font-size="13.5" font-weight="600">#1 b080330f</text>
+<rect x="884" y="676" width="292" height="100" rx="8" fill="#161b22" stroke="#30363d"/>
+<text x="900" y="702" fill="#8b949e" font-size="11.5" font-weight="600" letter-spacing="1">실시간 연동</text>
+<text x="900" y="726" fill="#8b949e" font-size="12">진행 중 요청 2건</text>
+<text x="900" y="743" fill="#8b949e" font-size="12">rosbridge 로 점유·이벤트·위치를</text>
+<text x="900" y="760" fill="#8b949e" font-size="12">받아 MySQL 에 적재한다.</text>
+</svg>

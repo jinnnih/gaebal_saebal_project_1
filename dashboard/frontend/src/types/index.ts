@@ -77,3 +77,17 @@ export interface LotVersion {
   min_turning_radius: number | null;
   imported_at: string;
 }
+
+/** 로봇 현재 위치. map 프레임 좌표(m)와 yaw(rad). DB 를 거치지 않는다. */
+export interface RobotPose {
+  x: number;
+  y: number;
+  yaw: number;
+  stamp: string;
+}
+
+export interface PoseResponse {
+  pose: RobotPose | null;
+  stale: boolean;
+  robot: { length: number; width: number };
+}

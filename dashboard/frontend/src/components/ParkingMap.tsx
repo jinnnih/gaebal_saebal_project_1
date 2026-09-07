@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import type { Layout, SpotState, SpotStatus } from '../types/index.ts';
+import type { Layout, PoseResponse, SpotState, SpotStatus } from '../types/index.ts';
 
 const FILL: Record<SpotStatus, string> = {
   FREE: 'var(--free)', RESERVED: 'var(--reserved)',
@@ -15,6 +15,7 @@ interface Props {
   states: SpotState[];
   selected: string | null;
   onSelect: (spotId: string | null) => void;
+  pose: PoseResponse | null;
 }
 
 /**
@@ -23,7 +24,7 @@ interface Props {
  * 좌표는 parking_spots.json 의 map 프레임(m)을 그대로 쓴다. map 은 y 가 위쪽이 +,
  * SVG 는 아래쪽이 + 라서 scale(1,-1) 로 뒤집고, 글자만 뒤집히지 않게 따로 그린다.
  */
-export function ParkingMap({ layout, states, selected, onSelect }: Props) {
+export function ParkingMap({ layout, states, selected, onSelect, pose }: Props) {
   const [hover, setHover] = useState<{ x: number; y: number; text: string } | null>(null);
   const statusOf = useMemo(
     () => new Map(states.map((s) => [s.spot_id, s.status])), [states]);
@@ -79,6 +80,24 @@ export function ParkingMap({ layout, states, selected, onSelect }: Props) {
           <circle cx={exit_pose[0]} cy={exit_pose[1]} r={0.75}
                   fill="var(--exit)" fillOpacity={0.25}
                   stroke="var(--exit)" strokeWidth={0.12} />
+
+          {/* 로봇 — 차체를 실제 치수로 그려야 통로 여유가 눈에 들어온다.
+              뒤집힌 그룹 안이라 로컬 +y 가 map 의 +y 이므로 yaw 를 그대로 쓴다. */}
+          {pose?.pose && (
+            <g transform={`translate(${pose.pose.x} ${pose.pose.y}) `
+                        + `rotate(${(pose.pose.yaw * 180) / Math.PI})`}
+               opacity={pose.stale ? 0.35 : 1}>
+              <rect x={-pose.robot.length / 2} y={-pose.robot.width / 2}
+                    width={pose.robot.length} height={pose.robot.width} rx={0.25}
+                    fill="var(--robot)" fillOpacity={0.85}
+                    stroke="var(--robot-line)" strokeWidth={0.1} />
+              {/* 진행 방향 */}
+              <path d={`M ${pose.robot.length / 2 - 0.1} 0 `
+                     + `L ${pose.robot.length / 2 - 0.9} ${pose.robot.width / 2 - 0.25} `
+                     + `L ${pose.robot.length / 2 - 0.9} ${-(pose.robot.width / 2 - 0.25)} Z`}
+                    fill="var(--robot-line)" />
+            </g>
+          )}
         </g>
 
         {/* 글자는 뒤집으면 안 되므로 y 부호만 바꿔 그린다 */}

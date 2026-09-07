@@ -5,16 +5,21 @@
  * Node 22+ 내장 WebSocket 을 쓰므로 의존성이 없다.
  */
 import { config } from '../config.ts';
-import { MSG_TYPE, TOPIC, QOS } from './contract.ts';
+import { MSG_TYPE, POSE_MSG_TYPE, TOPIC, QOS } from './contract.ts';
 
-type Handler = (topic: string, body: any) => void | Promise<void>;
+/**
+ * 원본 메시지를 그대로 넘긴다.
+ * std_msgs/String 토픽은 `msg.data` 가 JSON 문자열이고, `/amcl_pose` 같은 표준
+ * 메시지는 `msg` 자체가 객체다. 어느 쪽인지는 collector 가 토픽별로 판단한다.
+ */
+type Handler = (topic: string, msg: any) => void | Promise<void>;
 
 let ws: WebSocket | null = null;
 let handler: Handler = () => {};
 let stopped = false;
 
-function subscribe(topic: string, qos: object) {
-  ws?.send(JSON.stringify({ op: 'subscribe', topic, type: MSG_TYPE, qos }));
+function subscribe(topic: string, qos: object, type: string = MSG_TYPE) {
+  ws?.send(JSON.stringify({ op: 'subscribe', topic, type, qos }));
 }
 
 function connect() {
@@ -26,6 +31,7 @@ function connect() {
     console.log('[ros] 연결됨');
     subscribe(TOPIC.spotStates, QOS.spotStates);
     subscribe(TOPIC.missionStatus, QOS.missionStatus);
+    subscribe(TOPIC.robotPose, QOS.robotPose, POSE_MSG_TYPE);
     ws!.send(JSON.stringify({ op: 'advertise', topic: TOPIC.request, type: MSG_TYPE }));
   };
 
@@ -33,7 +39,7 @@ function connect() {
     try {
       const frame = JSON.parse(String(ev.data));
       if (frame.op !== 'publish') return;
-      await handler(frame.topic, JSON.parse(frame.msg?.data ?? '{}'));
+      await handler(frame.topic, frame.msg);
     } catch (e: any) {
       console.error('[ros] 메시지 처리 실패:', e?.message ?? e);
     }

@@ -3,5 +3,5 @@ dist/
 .env
 .env.local
 *.log
-docs/*.png
+
 *.tsbuildinfo

@@ -4,7 +4,7 @@
  * 레이아웃은 언제나 실제 원본(/parking_spots.json)에서 받는다.
  * DB 를 쓰는 나머지는 백엔드가 없으면 더미로 대체하고, 그 사실을 화면에 표시한다.
  */
-import type { Layout, Metrics, RequestRow, SpotState, LotVersion } from '../types/index.ts';
+import type { Layout, Metrics, PoseResponse, RequestRow, SpotState, LotVersion } from '../types/index.ts';
 import { dummyMetrics, dummyRequests, dummySpotStates } from './dummy.ts';
 
 export type Source = 'live' | 'dummy';
@@ -69,4 +69,9 @@ export async function cancelRequest(id: number) {
   const res = await fetch(`/api/requests/${id}/cancel`, { method: 'POST' });
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? '취소 실패');
   return res.json();
+}
+
+/** 로봇 위치. 백엔드가 메모리의 최신값을 주므로 자주 불러도 부담이 없다. */
+export async function fetchPose(): Promise<PoseResponse | null> {
+  return tryJson<PoseResponse>('/api/pose');
 }

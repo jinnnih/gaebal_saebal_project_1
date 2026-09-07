@@ -15,6 +15,9 @@ export const TOPIC = {
 /** 메시지는 std_msgs/String 에 JSON 문자열을 싣는다 (#9 Q2). */
 export const MSG_TYPE = 'std_msgs/String';
 
+/** 로봇 위치만 예외. Nav2 표준 토픽이라 계약 대상이 아니고 원래 타입을 그대로 쓴다. */
+export const POSE_MSG_TYPE = 'geometry_msgs/PoseWithCovarianceStamped';
+
 /**
  * 구독 QoS.
  *
@@ -29,6 +32,11 @@ export const QOS = {
   missionStatus: {
     history: 'keep_last', depth: 20,
     reliability: 'reliable', durability: 'volatile',
+  },
+  /** 위치는 최신값만 의미가 있다. 밀려도 버리는 게 낫다. */
+  robotPose: {
+    history: 'keep_last', depth: 1,
+    reliability: 'best_effort', durability: 'volatile',
   },
 } as const;
 
@@ -80,6 +88,34 @@ export interface SpotStatesMsg {
   stamp?: string;
   lot_checksum?: string;          // parking_spots.json sha256 앞 8자 (#6 감지용)
   spots: { id: string; status: string; request_id?: number | null }[];
+}
+
+/** geometry_msgs/PoseWithCovarianceStamped 중 우리가 쓰는 부분만. */
+export interface PoseMsg {
+  header?: { stamp?: { sec: number; nanosec: number }; frame_id?: string };
+  pose?: {
+    pose?: {
+      position?: { x: number; y: number; z: number };
+      orientation?: { x: number; y: number; z: number; w: number };
+    };
+  };
+}
+
+/** 대시보드가 쓰는 형태 — map 프레임 좌표(m)와 yaw(rad). */
+export interface RobotPose {
+  x: number;
+  y: number;
+  yaw: number;
+  stamp: string;
+}
+
+/** 쿼터니언에서 yaw 만 뽑는다. 평면 주행이라 roll/pitch 는 볼 필요가 없다. */
+export function toRobotPose(msg: PoseMsg): RobotPose | null {
+  const p = msg?.pose?.pose;
+  if (!p?.position || !p?.orientation) return null;
+  const { x: qx, y: qy, z: qz, w: qw } = p.orientation;
+  const yaw = Math.atan2(2 * (qw * qz + qx * qy), 1 - 2 * (qy * qy + qz * qz));
+  return { x: p.position.x, y: p.position.y, yaw, stamp: new Date().toISOString() };
 }
 
 export interface ValetRequestMsg {

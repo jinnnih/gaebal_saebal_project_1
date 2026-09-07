@@ -41,10 +41,56 @@ const subs = new Map<WebSocket, Set<string>>();
 const now = () => new Date().toISOString();
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** std_msgs/String 토픽 — JSON 을 문자열로 싣는다 (#9 Q2). */
 function publish(topic: string, body: object) {
-  const frame = JSON.stringify({ op: 'publish', topic, msg: { data: JSON.stringify(body) } });
+  publishRaw(topic, { data: JSON.stringify(body) });
+}
+
+/** 표준 메시지 토픽 — msg 자체가 객체다 (/amcl_pose). */
+function publishRaw(topic: string, msg: object) {
+  const frame = JSON.stringify({ op: 'publish', topic, msg });
   for (const [sock, topics] of subs) {
     if (topics.has(topic) && sock.readyState === sock.OPEN) sock.send(frame);
+  }
+}
+
+// ── 로봇 위치 시뮬레이션 ─────────────────────────────────────
+const robot = {
+  x: layout.entry_pose[0],
+  y: layout.entry_pose[1],
+  yaw: layout.entry_pose[2] ?? 0,
+};
+
+function publishPose() {
+  publishRaw('/amcl_pose', {
+    header: { frame_id: 'map' },
+    pose: {
+      pose: {
+        position: { x: robot.x, y: robot.y, z: 0 },
+        // 평면 주행이라 yaw 만 쓴다
+        orientation: { x: 0, y: 0, z: Math.sin(robot.yaw / 2), w: Math.cos(robot.yaw / 2) },
+      },
+      covariance: new Array(36).fill(0),
+    },
+  });
+}
+
+/** 목표 지점까지 직선 보간으로 이동시킨다. 실제 Nav2 경로는 아니고 화면 확인용이다. */
+async function driveTo(tx: number, ty: number, tyaw: number | null, seconds: number) {
+  const steps = Math.max(1, Math.round(seconds * 10));   // 10 Hz
+  const [sx, sy, syaw] = [robot.x, robot.y, robot.yaw];
+  const goalYaw = tyaw ?? Math.atan2(ty - sy, tx - sx);
+  // 짧은 쪽으로 회전
+  let dyaw = goalYaw - syaw;
+  while (dyaw > Math.PI) dyaw -= 2 * Math.PI;
+  while (dyaw < -Math.PI) dyaw += 2 * Math.PI;
+
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    robot.x = sx + (tx - sx) * t;
+    robot.y = sy + (ty - sy) * t;
+    robot.yaw = syaw + dyaw * t;
+    await sleep(seconds * 1000 / steps);
   }
 }
 
@@ -78,13 +124,17 @@ async function runParkMission(requestId: number, vehicleTag: string, wanted: str
   await sleep(900);
 
   emit('NAV_STARTED', null, { spot_id: spot });
-  await sleep(2500);
+  // 통로 합류점 -> 주차면 앞 대기지점 순으로 실제로 움직인다
+  const meta = layout.spots.find((s: any) => s.id === spot);
+  await driveTo(meta.aisle_point[0], meta.aisle_point[1], null, 2.5);
 
+  await driveTo(meta.prepark_pose[0], meta.prepark_pose[1], meta.prepark_pose[2], 1.2);
   emit('PREPARK_REACHED', 'ParkManeuver', { spot_id: spot, err_m: 0.05 });
-  await sleep(900);
+  await sleep(400);
 
   emit('PARK_STARTED', 'ParkManeuver', { spot_id: spot });
-  await sleep(2200);
+  // 후진 주차 — 주차면 중심까지
+  await driveTo(meta.goal_pose[0], meta.goal_pose[1], meta.goal_pose[2], 2.2);
 
   // 대부분 허용오차(0.12 m) 이내, 가끔 벗어나게 해서 실패 경로도 확인한다
   const errM = +(0.04 + Math.random() * 0.13).toFixed(3);
@@ -117,6 +167,7 @@ wss.on('connection', (sock) => {
       subs.get(sock)!.add(op.topic);
       console.log(`구독: ${op.topic}${op.qos?.durability ? ` (${op.qos.durability})` : ''}`);
       // transient_local 흉내 — 구독 즉시 마지막 값을 준다 (#9 Q5)
+      if (op.topic === '/amcl_pose') publishPose();
       if (op.topic === '/valet/spot_states') {
         sock.send(JSON.stringify({
           op: 'publish', topic: op.topic, msg: { data: JSON.stringify(snapshot()) },
@@ -136,6 +187,9 @@ wss.on('connection', (sock) => {
 
 // 하트비트 — latch 만으로는 로봇이 살아있는지 알 수 없다는 규석 지적 (#9 Q4)
 setInterval(() => publish('/valet/spot_states', snapshot()), 1000);
+
+// 로봇 위치는 10 Hz. 실제 AMCL 도 이 정도 주기로 낸다.
+setInterval(publishPose, 100);
 
 const free = [...state.values()].filter((v) => v.status === 'FREE').length;
 console.log(`목 rosbridge  ws://127.0.0.1:${PORT}`);
