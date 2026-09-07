@@ -75,7 +75,7 @@ def generate_launch_description():
         # 꺼야 한다 (ParkManeuver 진입 직전) — 이슈 #7.
         DeclareLaunchArgument('use_costmap_filters', default_value='false'),
         DeclareLaunchArgument('x', default_value='-24.00'),
-        DeclareLaunchArgument('y', default_value='-19.30'),
+        DeclareLaunchArgument('y', default_value='-20.05'),
         # 45 deg. 게이트를 지나며 이미 좌회전을 시작한 자세다.
         # parking_spots.json 의 entry_pose 와 같아야 한다.
         DeclareLaunchArgument('yaw', default_value='0.7854'),
