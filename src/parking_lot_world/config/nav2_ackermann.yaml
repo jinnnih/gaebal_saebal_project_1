@@ -294,7 +294,11 @@ planner_server:
       #     Optimizer 실패  1  ->  94 회
       #   77 m 짜리 긴 경로일수록 통로 중앙을 못 지키면 누적 이탈이 커진다.
       #   짧은 경로(코너/같은통로)는 4.0 으로도 통과해서 잘 안 드러난다.
-      cost_penalty: 7.0
+      # ! 4.0 -> 7.0 -> 12.0. 통로 중앙에 경로를 붙드는 유일한 레버다.
+      #   차로->통로 회전 여유가 0.02 m 뿐인데 추종 오차가 0.7~1.1 m 라,
+      #   경로가 조금이라도 주차행 쪽으로 붙으면 그 코너에서 셔플에 갇힌다.
+      #   빈 공간을 늘리는 방법(KEEPOUT_APRON)은 역효과였다.
+      cost_penalty: 12.0
       retrospective_penalty: 0.015
       lookup_table_size: 20.0
       cache_obstacle_heuristic: true

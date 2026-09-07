@@ -309,6 +309,35 @@ SPOTS = build_spots()
 # 253 인플레이션 대역이 아니라 치명 셀(254) 기준이다 —
 # critical_cost 를 60 으로 낮춰 253 은 지나갈 수 있게 했기 때문.
 ENTRY_TURN_MARGIN = S(0.30)
+# ! keepout 마스크가 주차면 입구쪽을 얼마나 비워 두는가 (주차면 깊이 대비).
+#   0.20 -> 0.35 로 키웠다. 이유는 주차가 아니라 **통로 회전**이다.
+#
+#   차가 통로를 90 도 돌 때 바깥 모서리가 크게 쓸고 지나간다. 그 모서리가
+#   keepout 인플레이션의 253 대역(치명 셀에서 내접원 이내)에 닿으면 MPPI 가
+#   전진을 거부하고 전후진 셔플에 갇힌다.
+#
+#   서측 차로에서 중앙통로로 붙는 우회전을 재 보면 (2026-09-07 실측):
+#     이상적인 최소반경 회전의 최남단  -4.57
+#     253 회피 하한 (keepout -5.50 + 내접원 0.95)  -4.55
+#     -> 여유 0.02 m. 사실상 0 이다.
+#   여기에 MPPI 추종 오차 0.7~1.1 m 가 얹히니 그 코너에서 반복 실패했다.
+#
+#   0.35 로 올려 봤다. 계산상 여유가 0.02 -> 0.87 m 가 되고 좌표도 안 바뀐다.
+#   그런데 **실측은 반대였다** (2026-09-07):
+#
+#     진입 여유 0.20   입구->출구 2/3   실패 지점 y = -4.30
+#     진입 여유 0.35   입구->출구 1/3   실패 지점 y = -4.82, -4.84
+#
+#   넓혀 준 공간을 경로가 그대로 소비한다. keepout 이 남쪽으로 물러나니
+#   비용도 같이 물러나서, 플래너가 주차행 쪽으로 더 붙는 경로를 낸다.
+#   결과적으로 여유는 그대로고 차만 주차행 안(진입 여유 스트립)으로 들어간다.
+#   0.20 으로 되돌린다.
+#
+#   즉 이 문제는 "빈 공간을 늘려서" 풀 수 없다. 경로를 통로 중앙에 붙들거나
+#   (cost_penalty), 추종 오차 자체를 줄여야 한다.
+KEEPOUT_APRON = 0.20
+# 코너에서 실측된 MPPI 경로 추종 오차 (2026-09-02~07)
+TRACK_ERR = S(0.70)
 # general_goal_checker 의 xy 허용오차. 아래 검사와 NAV2_YAML 이 같이 쓴다.
 # ! 차량 크기에 맞춰야 한다. Nav2 기본값 0.25 m 는 전장 0.35 m 짜리 소형
 #   차동구동 로봇 기준이다 (전장의 0.7 배). 전장 4.5 m 차량에 0.35 m 를
@@ -329,6 +358,47 @@ def _pose_extent(x, y, th):
         xs.append(x + lx * c - ly * s)
         ys.append(y + lx * s + ly * c)
     return min(xs), max(xs), min(ys), max(ys)
+
+
+def check_aisle_turn():
+    """차로에서 통로로 90 도 붙을 때 바깥/안쪽 모서리가 keepout 에 닿는가.
+
+    ! 이상적인 최소반경 회전으로도 여유가 없으면, 추종 오차가 얹히는 순간
+      MPPI 가 253 대역에 걸려 전후진 셔플에 갇힌다. 실측 추종 오차가
+      0.7~1.1 m 라 그만큼은 남겨야 한다.
+    """
+    hwb = ROBOT_WHEELBASE / 2.0
+    corners = [(ROBOT_L / 2, ROBOT_W / 2), (ROBOT_L / 2, -ROBOT_W / 2),
+               (-ROBOT_L / 2, -ROBOT_W / 2), (-ROBOT_L / 2, ROBOT_W / 2)]
+    # 서측 차로(북상) -> 중앙통로(동진) 우회전. 중앙통로 중심선에서 끝난다.
+    end_y, end_th, start_th = AISLE_C_C, 0.0, math.pi / 2
+    cx = -hwb + ROBOT_MIN_R * math.cos(end_th - math.pi / 2)
+    cy = end_y + ROBOT_MIN_R * math.sin(end_th - math.pi / 2)
+    south = 1e9
+    for k in range(181):
+        th = end_th + (start_th - end_th) * k / 180.0
+        by = cy + ROBOT_MIN_R * math.sin(th + math.pi / 2)
+        py = by + hwb * math.sin(th)
+        for lx, ly in corners:
+            south = min(south, py + lx * math.sin(th) + ly * math.cos(th))
+    # B 행 keepout 북단 = 주차면 북단에서 진입 여유만큼 남쪽
+    b_row = [r for r in ROWS if r["name"] == "B"][0]
+    keep_n = b_row["y"][1] - STALL_D * KEEPOUT_APRON
+    limit = keep_n + ROBOT_W / 2.0        # 253 대역 회피 하한
+    margin = south - limit
+    print("  차로->통로 회전 여유: %.2f m  (최남단 %.2f, 253 하한 %.2f)"
+          % (margin, south, limit))
+    if margin < TRACK_ERR:
+        # ! 여기서 생성을 막지는 않는다. 이 여유가 부족한 것은 사실이지만
+        #   KEEPOUT_APRON 을 키워서 늘리는 방법은 실측으로 역효과였다
+        #   (넓힌 공간을 경로가 그대로 소비한다 - 위 상수 주석 참고).
+        #   남은 수단은 cost_penalty 로 경로를 통로 중앙에 붙들거나,
+        #   AISLE_CENTER 를 넓혀 주차행을 실제로 벌리는 것이다.
+        print("  ! 여유 %.2f m < 실측 추종 오차 %.2f m — 그 코너에서 MPPI 가"
+              % (margin, TRACK_ERR))
+        print("    셔플에 갇힐 수 있다. cost_penalty / AISLE_CENTER 를 볼 것.")
+    return margin
+
 
 
 def check_exit_approach():
@@ -1259,7 +1329,11 @@ planner_server:
       #     Optimizer 실패  1  ->  94 회
       #   77 m 짜리 긴 경로일수록 통로 중앙을 못 지키면 누적 이탈이 커진다.
       #   짧은 경로(코너/같은통로)는 4.0 으로도 통과해서 잘 안 드러난다.
-      cost_penalty: 7.0
+      # ! 4.0 -> 7.0 -> 12.0. 통로 중앙에 경로를 붙드는 유일한 레버다.
+      #   차로->통로 회전 여유가 0.02 m 뿐인데 추종 오차가 0.7~1.1 m 라,
+      #   경로가 조금이라도 주차행 쪽으로 붙으면 그 코너에서 셔플에 갇힌다.
+      #   빈 공간을 늘리는 방법(KEEPOUT_APRON)은 역효과였다.
+      cost_penalty: 12.0
       retrospective_penalty: 0.015
       lookup_table_size: 20.0
       cache_obstacle_heuristic: true
@@ -1542,6 +1616,7 @@ def main(root):
     print("  최소회전반경: %.3f m" % ROBOT_MIN_R)
     check_gate_poses()
     check_exit_approach()
+    check_aisle_turn()
     _m, _n = check_entry_turn()
     print("  입구 좌회전 여유: %.2f m (포락선 최동단 %.2f, 블록 %.2f)"
           % (_m, _n, BLOCK_X0))
@@ -1589,14 +1664,16 @@ def main(root):
     fill_rect(gk, MAP_X0, MAP_Y0, MAP_X1, Y_MIN, OCC)      # 남
     fill_rect(gk, MAP_X0, Y_MAX, MAP_X1, MAP_Y1, OCC)      # 북
     for s in SPOTS:
-        # 주차면 안쪽 80% 만 금지 (입구쪽 20% 는 진입 여유로 남김)
+        # 주차면 안쪽만 금지. 입구쪽 KEEPOUT_APRON 만큼은 진입 여유로 남긴다
         d = (s["y1"] - s["y0"])
         if s["type"] == "hatched":
             fill_rect(gk, s["x0"], s["y0"], s["x1"], s["y1"], OCC)
         elif s["entry_side"] == "S":
-            fill_rect(gk, s["x0"], s["y0"] + d * 0.20, s["x1"], s["y1"], OCC)
+            fill_rect(gk, s["x0"], s["y0"] + d * KEEPOUT_APRON, s["x1"],
+                      s["y1"], OCC)
         else:
-            fill_rect(gk, s["x0"], s["y0"], s["x1"], s["y1"] - d * 0.20, OCC)
+            fill_rect(gk, s["x0"], s["y0"], s["x1"],
+                      s["y1"] - d * KEEPOUT_APRON, OCC)
     write_pgm(os.path.join(md, "keepout_mask.pgm"), gk,
               "outside lot + stall interiors = keepout")
     write_map_yaml(os.path.join(md, "keepout_mask.yaml"), "keepout_mask.pgm")
