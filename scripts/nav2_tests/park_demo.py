@@ -24,7 +24,8 @@
   그래서 후진 진입은 cmd_vel 을 직접 내보내 실행한다. 주차면 진입은 원래
   직선 후진이라 플래너가 필요 없기도 하다.
 
-    python3 park_demo.py [주차면ID]        예: park_demo.py A07
+    python3 park_demo.py A08            주차
+    python3 park_demo.py A08 unpark     출차
 """
 import json
 import math
@@ -41,6 +42,7 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 
 SPOT = sys.argv[1] if len(sys.argv) > 1 else 'A07'
+MODE = sys.argv[2] if len(sys.argv) > 2 else 'park'   # park | unpark
 
 
 def load_spots():
@@ -180,9 +182,65 @@ class Park(Node):
             self.cmd.publish(Twist()); rclpy.spin_once(self, timeout_sec=0.02)
         return self.pose()
 
+    # ---------------- 출차: 전진 탈출 ----------------
+    def forward_hold(self, gx, gy, gyaw, dist, speed=0.22,
+                     k_e=0.35, k_s=0.8, r_min=3.7829, limit=60.0):
+        """방향을 유지하며 주차면 밖으로 곧게 전진한다.
+
+        ! 전진은 후진과 부호가 반대다. 차가 헤딩 방향으로 가므로
+              de/ds = +sin(phi)
+          이라 phi_cmd = -k_e * e 로 두어야 수렴한다. 후진용 부호를 그대로
+          쓰면 발산한다.
+        """
+        lx, ly = -math.sin(gyaw), math.cos(gyaw)
+        start = self.pose()
+        tw = Twist()
+        t0 = time.time()
+        moved = 0.0
+        while rclpy.ok() and time.time() - t0 < limit:
+            c = self.pose()
+            if c is None:
+                rclpy.spin_once(self, timeout_sec=0.05); continue
+            moved = math.dist(c[:2], start[:2])
+            if moved >= dist:
+                break
+            e = (c[0] - gx) * lx + (c[1] - gy) * ly
+            phi = -max(-0.20, min(0.20, k_e * e))       # 전진이라 부호 반대
+            psi = math.atan2(math.sin(gyaw + phi - c[2]),
+                             math.cos(gyaw + phi - c[2]))
+            v = abs(speed)
+            w_max = v / r_min
+            tw.linear.x = v
+            tw.angular.z = max(-w_max, min(w_max, v * k_s * psi))
+            self.cmd.publish(tw)
+            rclpy.spin_once(self, timeout_sec=0.05)
+        for _ in range(20):
+            self.cmd.publish(Twist()); rclpy.spin_once(self, timeout_sec=0.02)
+        return moved
+
+    def forward_turn(self, target_yaw, ccw, radius, speed=0.22, limit=90.0):
+        """목표 방향까지 전진 선회한다 (주차의 후진 선회와 대칭)."""
+        tw = Twist()
+        tw.linear.x = abs(speed)
+        tw.angular.z = (1.0 if ccw else -1.0) * abs(speed) / radius
+        t0 = time.time()
+        while rclpy.ok() and time.time() - t0 < limit:
+            self.cmd.publish(tw)
+            rclpy.spin_once(self, timeout_sec=0.05)
+            c = self.pose()
+            if c is None:
+                continue
+            d = math.atan2(math.sin(target_yaw - c[2]),
+                           math.cos(target_yaw - c[2]))
+            if abs(d) < math.radians(4.0):
+                break
+        for _ in range(20):
+            self.cmd.publish(Twist()); rclpy.spin_once(self, timeout_sec=0.02)
+        return self.pose()
+
     # ---------------- 3단계: 중심선 추종 후진 ----------------
     def reverse_track(self, gx, gy, gyaw, speed=0.22, limit=90.0,
-                      k_e=0.35, k_th=2.0, r_min=3.7829, taper=2.0):
+                      k_e=0.35, k_s=0.8, r_min=3.7829, taper=2.0):
         """주차면 중심선을 따라가며 후진한다.
 
         ! 눈 감고 곧게 후진하면 선회 후 남은 횡오차가 그대로 남는다.
@@ -203,9 +261,23 @@ class Park(Node):
           가 났다. 남은 거리가 taper 이내면 phi_cmd 를 0 으로 줄여 차를
           중심선에 나란히 세운다.
 
-        ! 게인도 낮췄다 (0.60 -> 0.35). 후진 조향은 응답이 느려서 위치 루프가
-          빠르면 진동한다. 선회가 잘 끝나면 (오차 0.1 m) 원래 보정할 게 별로
-          없다. 이 항은 선회가 어긋났을 때를 위한 보험이다.
+        ! k_e 는 0.35 다. 0.60 으로 올려 봤다가 되돌렸다. 방향 게인을
+          고친 뒤라 위치 게인은 올려도 될 줄 알았는데 아니었다.
+          위치 루프가 방향 루프보다 빠르면 결합계가 진동한다.
+            k_e 0.35 / taper 2.0  ->  0.16 / 0.21 / 0.18 m  (안정)
+            k_e 0.60 / taper 1.2  ->  0.05 / 0.19 / 0.43 m  (3회중 1회 발산,
+                                      방향오차 -33 deg)
+          잔류 0.18 m 는 taper 구간에서 보정을 멈추기 때문이다.
+          더 줄이려면 게인이 아니라 선회 정확도를 올려야 한다.
+
+        ! 방향 게인은 **거리영역**으로 잡아야 한다. 조향 한계는 곡률
+          (1/R_min = 0.264 /m) 이라 속도와 무관한데, ω = k*psi 로 시간영역
+          게인을 쓰면 저속에서 ω 한계(v/R_min)가 작아져 조금만 벗어나도
+          포화된다. 그러면 조향이 bang-bang 이 되어 릴레이 진동에 빠진다.
+          실측으로 방향오차 -34.7 deg 가 났다 (같은 코드가 어떤 회차엔
+          되고 어떤 회차엔 안 됐다 — 한계 안정이었다).
+              omega = v * k_s * psi,   k_s [1/m] 는 곡률 게인
+          k_s=0.8 이면 psi 0.33 rad 까지 포화되지 않는다.
         """
         ax, ay = math.cos(gyaw), math.sin(gyaw)          # 주차면 축
         lx, ly = -math.sin(gyaw), math.cos(gyaw)         # 횡방향
@@ -229,10 +301,17 @@ class Park(Node):
             phi *= min(1.0, proj / taper)      # 종단에서 중심선과 나란히
             th_cmd = gyaw + phi
             psi = math.atan2(math.sin(th_cmd - c[2]), math.cos(th_cmd - c[2]))
-            w_max = abs(speed) / r_min
-            tw.linear.x = -abs(speed) * (0.5 if proj < 0.5 else 1.0)
-            tw.angular.z = max(-w_max, min(w_max, k_th * psi))
+            v = abs(speed) * (0.5 if proj < 0.5 else 1.0)
+            w_max = v / r_min
+            tw.linear.x = -v
+            tw.angular.z = max(-w_max, min(w_max, v * k_s * psi))
             self.cmd.publish(tw)
+            if os.environ.get('PARK_DEBUG') and                     time.time() - getattr(self, '_dbg', 0) > 0.8:
+                self._dbg = time.time()
+                print('    proj %5.2f  e %+6.3f  phi %+5.1f  th %+6.1f  '
+                      'psi %+5.1f  w %+6.3f'
+                      % (proj, e, math.degrees(phi), math.degrees(c[2]),
+                         math.degrees(psi), tw.angular.z))
             rclpy.spin_once(self, timeout_sec=0.05)
         for _ in range(25):
             self.cmd.publish(Twist()); rclpy.spin_once(self, timeout_sec=0.02)
@@ -271,81 +350,118 @@ def lifecycle(node, action):
         return False
 
 
+def do_park(n, D, spot):
+    gx, gy, gyaw = spot['goal_pose']
+    ax, ay = spot['aisle_point']
+    TURN_DX = float(os.environ.get('PARK_TURN_DX', 4.43))
+    ccw = gyaw > 0.0
+    appr_x, appr_y = ax + TURN_DX, ay
+
+    print('  통로점 (%.2f, %.2f)   목표 (%.2f, %.2f, %+.0f deg)'
+          % (ax, ay, gx, gy, math.degrees(gyaw)))
+    print()
+    print('[1/4] 접근 — Nav2 로 통로를 따라 접근점 (%.2f, %.2f) 까지'
+          % (appr_x, appr_y))
+    if not n.approach(appr_x, appr_y, 0.0):
+        return False
+    print()
+    print('  Nav2 에서 제어권 인수 (velocity_smoother 정지)')
+    lifecycle(n, 'deactivate'); time.sleep(1.5)
+
+    print()
+    print('[2/4] 미세정렬 — 통로를 따라 x 를 %.2f 로' % appr_x)
+    c = n.align_x(appr_x)
+    print('  정렬 후 (%.2f, %.2f, %+.0f deg)   x 오차 %.2f m'
+          % (c[0], c[1], math.degrees(c[2]), abs(c[0] - appr_x)))
+
+    print()
+    print('[3/4] 후진 선회 — 반경 %.2f m 로 %+.0f deg 까지'
+          % (n.r_base, math.degrees(gyaw)))
+    c = n.reverse_turn(gyaw, ccw, n.r_base)
+    print('  선회 후 (%.2f, %.2f, %+.0f deg)   중심선까지 %.2f m'
+          % (c[0], c[1], math.degrees(c[2]), abs(c[0] - gx)))
+
+    print()
+    print('[4/4] 중심선 추종 후진 — 횡오차를 줄이며 주차면 안으로')
+    n.reverse_track(gx, gy, gyaw)
+    return True
+
+
+def do_unpark(n, D, spot):
+    """출차 — 주차의 역순. 전진으로만 나온다 (계획서 요구사항)."""
+    gx, gy, gyaw = spot['goal_pose']
+    ax, ay = spot['aisle_point']
+    ccw = gyaw < 0.0        # -90 에서 0 으로 가려면 반시계
+    # 전진 선회가 끝나는 지점이 통로 중심선이 되도록 탈출 거리를 잡는다
+    turn_start_y = ay + (n.r_base if gyaw < 0 else -n.r_base)
+    c = n.pose()
+    out = abs(c[1] - turn_start_y)
+
+    print('  현재 (%.2f, %.2f, %+.0f deg)   통로 %.2f'
+          % (c[0], c[1], math.degrees(c[2]), ay))
+    print()
+    print('  Nav2 에서 제어권 인수 (velocity_smoother 정지)')
+    lifecycle(n, 'deactivate'); time.sleep(1.5)
+
+    print()
+    print('[1/3] 전진 탈출 %.2f m — 주차면 밖으로 (후진 안 함)' % out)
+    moved = n.forward_hold(gx, gy, gyaw, out)
+    c = n.pose()
+    print('  탈출 후 (%.2f, %.2f, %+.0f deg)  이동 %.2f m'
+          % (c[0], c[1], math.degrees(c[2]), moved))
+
+    print()
+    print('[2/3] 전진 선회 — 통로 방향(0 deg)까지, 반경 %.2f m' % n.r_base)
+    c = n.forward_turn(0.0, ccw, n.r_base)
+    print('  선회 후 (%.2f, %.2f, %+.0f deg)   통로 중심선까지 %.2f m'
+          % (c[0], c[1], math.degrees(c[2]), abs(c[1] - ay)))
+
+    print()
+    print('  Nav2 에 제어권 반납')
+    lifecycle(n, 'activate'); time.sleep(2.0)
+    ex = D['exit_pose']
+    print()
+    print('[3/3] 출구로 — Nav2 (%.2f, %.2f)' % (ex[0], ex[1]))
+    return n.approach(ex[0], ex[1], ex[2], limit=420.0)
+
+
 def main():
     rclpy.init()
     n = Park()
     if not n.wait_odom():
         print('/odom 없음 — 시뮬이 안 돌고 있다'); rclpy.shutdown(); return 1
     D = load_spots()
+    n.r_base = D['robot_spec'].get('min_turning_radius_base_link', 3.78)
     spot = next((s for s in D['spots'] if s['id'] == SPOT), None)
     if spot is None:
         print('주차면 %s 없음' % SPOT); rclpy.shutdown(); return 1
 
-    gx, gy, gyaw = spot['goal_pose']
-    ax, ay = spot['aisle_point']
-    R = D['robot_spec'].get('min_turning_radius_base_link', 3.78)
-    ccw = gyaw > 0.0                 # +90 도로 끝나면 반시계
-    # ! 이상적인 90 도 선회라면 x 이동이 정확히 R 이어야 하는데, 실측은
-    #   4.43 m 였다 (2026-09-07, 후진 0.25 m/s). 조향이 목표각에 도달하는
-    #   동안 차가 더 나아가기 때문이다. 그대로 R 을 쓰면 선회가 주차면
-    #   중심선에서 0.65 m 서쪽으로 끝나 옆 주차면을 친다.
-    #   접근점을 그만큼 동쪽으로 밀어 보정한다.
-    TURN_DX = float(os.environ.get('PARK_TURN_DX', 4.43))
-    appr_x, appr_y = ax + TURN_DX, ay
-    turn_end_y = ay + (-R if ccw else R)
+    print('===== %s  주차면 %s (행 %s, 진입 %s) ====='
+          % ('출차' if MODE == 'unpark' else '주차',
+             spot['id'], spot['row'], spot['entry_side']))
+    ok = do_unpark(n, D, spot) if MODE == 'unpark' else do_park(n, D, spot)
+    if not ok:
+        print('  실패'); lifecycle(n, 'activate'); rclpy.shutdown(); return 1
 
-    print('===== 주차면 %s (행 %s, 진입 %s) ====='
-          % (spot['id'], spot['row'], spot['entry_side']))
-    print('  통로점 (%.2f, %.2f)   목표 (%.2f, %.2f, %+.0f deg)'
-          % (ax, ay, gx, gy, math.degrees(gyaw)))
-    print('  접근점 (%.2f, %.2f, 0 deg)  선회 x이동 %.2f (실측 보정)'
-          % (appr_x, appr_y, TURN_DX))
-    print()
-    print('[1/3] 접근 — Nav2 로 통로를 따라 접근점까지 (통로 방향 유지)')
-    if not n.approach(appr_x, appr_y, 0.0):
-        print('  접근 실패'); rclpy.shutdown(); return 1
-
-    print()
-    print('  Nav2 에서 제어권 인수 (velocity_smoother 정지) — 발행 %s' % n.topic)
-    lifecycle(n, 'deactivate')
-    time.sleep(1.5)
-
-    print()
-    print('[1.5/3] 미세정렬 — 통로를 따라 x 를 %.2f 로' % appr_x)
-    c = n.align_x(appr_x)
-    print('  정렬 후 (%.2f, %.2f, %+.0f deg)   x 오차 %.2f m'
-          % (c[0], c[1], math.degrees(c[2]), abs(c[0] - appr_x)))
-    print()
-    print('[2/3] 후진 선회 — 반경 %.2f m 로 %+.0f deg 까지' % (R, math.degrees(gyaw)))
-    before = n.pose()
-    c = n.reverse_turn(gyaw, ccw, R)
-    print('  선회 후 (%.2f, %.2f, %+.0f deg)   주차면 중심선까지 x 오차 %.2f m'
-          % (c[0], c[1], math.degrees(c[2]), abs(c[0] - gx)))
-    # ! 여기서 x 가 많이 어긋나 있으면 그대로 후진하면 옆 주차면을 친다.
-    if abs(c[0] - gx) > 0.45:
-        print('  ! x 오차가 크다 (%.2f m). 그대로 후진하면 옆 주차면을 친다.'
-              % abs(c[0] - gx))
-        print('    선회 시작점 (%.2f) 과 실제 (%.2f) 차이가 증폭된 것이다.'
-              % (appr_x, before[0]))
-
-    rest = abs(gy - c[1])
-    print()
-    print('[3/3] 중심선 추종 후진 %.2f m — 횡오차를 줄이며 들어간다' % rest)
-    moved = n.reverse_track(gx, gy, gyaw)
     c = n.pose()
-    err = math.dist(c[:2], (gx, gy))
-    dyaw = math.degrees(math.atan2(math.sin(c[2] - gyaw),
-                                   math.cos(c[2] - gyaw)))
-    print('  후진 %.2f m  최종 (%.2f, %.2f, %+.0f deg)'
-          % (moved, c[0], c[1], math.degrees(c[2])))
+    gx, gy, gyaw = spot['goal_pose']
+    if MODE == 'park':
+        err = math.dist(c[:2], (gx, gy))
+        dyaw = math.degrees(math.atan2(math.sin(c[2] - gyaw),
+                                       math.cos(c[2] - gyaw)))
+        x0, y0, x1, y1 = spot['rect']
+        inside = x0 <= c[0] <= x1 and y0 <= c[1] <= y1
+        print()
+        print('  최종 (%.2f, %.2f, %+.0f deg)' % (c[0], c[1], math.degrees(c[2])))
+        print('  goal 대비  위치오차 %.2f m,  방향오차 %+.1f deg' % (err, dyaw))
+        print('  주차면 안에 있는가: %s' % ('예' if inside else '아니오'))
+    else:
+        ex = D['exit_pose']
+        print()
+        print('  최종 (%.2f, %.2f, %+.0f deg)   출구까지 %.2f m'
+              % (c[0], c[1], math.degrees(c[2]), math.dist(c[:2], ex[:2])))
     print()
-    print('  goal 대비  위치오차 %.2f m,  방향오차 %+.1f deg' % (err, dyaw))
-    x0, y0, x1, y1 = spot['rect']
-    inside = x0 <= c[0] <= x1 and y0 <= c[1] <= y1
-    print('  주차면 안에 있는가: %s  (rect x %.2f~%.2f, y %.2f~%.2f)'
-          % ('예' if inside else '아니오', x0, x1, y0, y1))
-    print()
-    print('  Nav2 에 제어권 반납 (velocity_smoother 재개)')
+    print('  Nav2 에 제어권 반납')
     lifecycle(n, 'activate')
     rclpy.shutdown()
     return 0
