@@ -118,7 +118,12 @@ goal checker 허용오차 **0.12 m** 를 그대로 반영한다.
 | POST | `/api/requests/:id/cancel` | 요청 취소 (`ABORTED` 이벤트 기록) |
 | GET | `/api/requests/:id/events` | 이벤트 타임라인 |
 | GET | `/api/metrics` | 정량 지표 집계 |
+| GET | `/api/pose` | 로봇 현재 위치 (DB 를 거치지 않음) |
 | GET | `/api/health` | 상태 확인 |
+
+`POST /api/requests` 는 `kind` 로 입차(`PARK`)와 출차(`RETRIEVE`)를 가른다.
+출차는 `spot_id` 를 생략하면 그 차량의 가장 최근 주차 기록에서 면을 찾고,
+그 면이 점유 상태가 아니면 409 로 거부한다.
 
 ---
 
@@ -154,6 +159,7 @@ ROSBRIDGE_URL=ws://172.30.1.11:9090 npm run dev:api
 
 - [x] rosbridge WebSocket 수집기 (`mission_event` / `spot_state` 적재) — `backend/src/ros/collector.ts`
 - [x] `POST /api/requests` 에서 `/valet/request` 토픽 발행
-- [ ] 로봇 위치 오버레이 (`/amcl_pose`) — 2주차 Nav2 이후
+- [x] 로봇 위치 오버레이 (`/amcl_pose`) — 차체를 실제 제원으로 도면에 그린다
+- [x] 출차(`RETRIEVE`) 시나리오 — 주차된 차량 선택 → 탈출 → 출구
 - [ ] 폴링을 WebSocket 구독으로 교체
 - [ ] 실제 rosbridge 연동 검증 — 규석의 주차면 관리 노드 대기

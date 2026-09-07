@@ -153,6 +153,47 @@ async function runParkMission(requestId: number, vehicleTag: string, wanted: str
   console.log(`  → ${ok ? '주차 완료' : '실패'} (오차 ${errM} m)`);
 }
 
+/** 출차 요청 하나를 재생한다. 주차의 역순이되 마지막이 출구다. */
+async function runRetrieveMission(requestId: number, vehicleTag: string, spot: string | null) {
+  const target = spot && state.get(spot)?.status === 'OCCUPIED'
+    ? spot
+    : [...state].find(([, v]) => v.status === 'OCCUPIED')?.[0];
+  if (!target) { console.log('점유된 주차면이 없습니다'); return; }
+
+  const meta = layout.spots.find((s: any) => s.id === target);
+  let seq = 1;
+  const emit = (event: string, bt_node: string | null, payload: object = {}) =>
+    publish('/valet/mission_status',
+      { stamp: now(), request_id: requestId, seq: seq++, event, bt_node, payload });
+
+  console.log(`출차 #${requestId} ${vehicleTag} ← ${target}`);
+
+  emit('REQUEST_ACCEPTED', null, { vehicle_tag: vehicleTag, kind: 'RETRIEVE' });
+  await sleep(600);
+
+  // 회수하러 가는 동안 그 면을 잠근다 — 다른 요청이 배정하면 안 된다
+  state.set(target, { status: 'RESERVED', request_id: requestId });
+  publish('/valet/spot_states', snapshot());
+
+  emit('NAV_STARTED', null, { spot_id: target });
+  await driveTo(meta.aisle_point[0], meta.aisle_point[1], null, 2.0);
+
+  emit('UNPARK_STARTED', 'UnparkManeuver', { spot_id: target });
+  // 전진 탈출 — 주차면 중심에서 대기지점으로
+  await driveTo(meta.prepark_pose[0], meta.prepark_pose[1], meta.prepark_pose[2], 1.5);
+  await driveTo(meta.aisle_point[0], meta.aisle_point[1], null, 1.0);
+  emit('UNPARK_DONE', 'UnparkManeuver', { spot_id: target });
+
+  // 면을 비운다
+  state.set(target, { status: 'FREE', request_id: null });
+  publish('/valet/spot_states', snapshot());
+
+  // 출구까지
+  await driveTo(layout.exit_pose[0], layout.exit_pose[1], layout.exit_pose[2], 3.0);
+  emit('EXIT_REACHED', 'ReportStatus', { spot_id: target });
+  console.log(`  → 출차 완료 (${target} 비움)`);
+}
+
 const wss = new WebSocketServer({ port: PORT });
 
 wss.on('connection', (sock) => {
@@ -177,7 +218,8 @@ wss.on('connection', (sock) => {
       console.log(`발행 등록: ${op.topic}`);
     } else if (op.op === 'publish' && op.topic === '/valet/request') {
       const req = JSON.parse(op.msg?.data ?? '{}');
-      runParkMission(req.request_id, req.vehicle_tag ?? '무명', req.spot_id ?? null)
+      const run = req.kind === 'RETRIEVE' ? runRetrieveMission : runParkMission;
+      run(req.request_id, req.vehicle_tag ?? '무명', req.spot_id ?? null)
         .catch((e) => console.error(e));
     }
   });

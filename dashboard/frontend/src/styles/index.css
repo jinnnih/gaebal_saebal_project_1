@@ -92,6 +92,9 @@ main { display: grid; grid-template-columns: 1fr 320px; gap: 16px; padding: 16px
 .s-PARKED, .s-COMPLETED { color: var(--free); border-color: color-mix(in srgb, var(--free) 45%, transparent); }
 .s-FAILED { color: var(--blocked); border-color: color-mix(in srgb, var(--blocked) 45%, transparent); }
 .s-CANCELLED { color: var(--muted); }
+.k-PARK { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.k-RETRIEVE { color: var(--exit); border-color: color-mix(in srgb, var(--exit) 40%, transparent); }
+.req-form select { max-width: 55%; }
 
 .loading, .fatal { padding: 40px 20px; color: var(--muted); }
 .fatal { color: var(--blocked); }

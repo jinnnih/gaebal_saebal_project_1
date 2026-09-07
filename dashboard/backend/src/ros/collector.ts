@@ -37,9 +37,28 @@ async function checkChecksum(sent?: string) {
   }
 }
 
+/**
+ * 로봇이 비었다고 한 면에 '주차완료' 요청이 남아 있으면 그 요청이 낡은 것이다.
+ *
+ * 점유 상태의 authority 는 로봇이므로 요청 쪽을 닫는다. 이걸 안 하면 이미 나간 차가
+ * 출차 대상 목록에 유령으로 남는다. 로봇이 재기동해 상태를 새로 보고하는 경우에도
+ * 스스로 복구되도록, 변경분이 아니라 스냅샷 전체를 기준으로 본다.
+ */
+async function reconcileStaleParks(snap: SpotStatesMsg) {
+  const free = snap.spots.filter((s) => s.status === 'FREE').map((s) => s.id);
+  if (!free.length) return;
+  const [r] = await pool.query<any>(
+    `UPDATE valet_request SET status = 'COMPLETED', finished_at = CURRENT_TIMESTAMP(3)
+      WHERE kind = 'PARK' AND status = 'PARKED' AND assigned_spot_id IN (?)`, [free]);
+  if (r.affectedRows) {
+    console.log(`[수집기] 로봇이 비웠다고 보고한 면의 낡은 주차 요청 ${r.affectedRows}건 정리`);
+  }
+}
+
 async function onSpotStates(snap: SpotStatesMsg) {
   if (!versionId) return;
   await checkChecksum(snap.lot_checksum);
+  await reconcileStaleParks(snap);
 
   // 전체 스냅샷으로 오므로(#9 Q3) 바뀐 것만 골라 쓴다.
   const [rows] = await pool.query<any[]>(
@@ -106,7 +125,30 @@ async function onMissionStatus(m: MissionStatusMsg) {
   if (m.event === 'PARK_DONE' || m.event === 'FAILED') {
     await writeMetric(m, ts, m.event === 'PARK_DONE');
   }
+
+  if (m.event === 'EXIT_REACHED') await closeParkOnRetrieve(m, ts);
   console.log(`[수집기] #${m.request_id} seq ${m.seq} ${m.event}`);
+}
+
+/**
+ * 출차가 끝나면 그 차를 세워 뒀던 입차 요청도 닫는다.
+ *
+ * 안 닫으면 이미 나간 차가 큐의 '주차완료' 목록에 계속 남아, 출차 대상 선택에
+ * 유령 차량이 뜬다. 요청끼리 직접 참조하지 않고 주차면으로 잇는다 —
+ * 한 면에 PARKED 요청은 하나뿐이라 이걸로 충분하다.
+ */
+async function closeParkOnRetrieve(m: MissionStatusMsg, ts: string) {
+  const [[req]] = await pool.query<any>(
+    'SELECT kind, assigned_spot_id FROM valet_request WHERE id = ?', [m.request_id]);
+  if (req?.kind !== 'RETRIEVE' || !req.assigned_spot_id) return;
+
+  const [res] = await pool.execute<any>(
+    `UPDATE valet_request SET status = 'COMPLETED', finished_at = ?
+      WHERE assigned_spot_id = ? AND kind = 'PARK' AND status = 'PARKED'`,
+    [ts, req.assigned_spot_id]);
+  if (res.affectedRows) {
+    console.log(`  └ ${req.assigned_spot_id} 입차 요청 ${res.affectedRows}건 COMPLETED 처리`);
+  }
 }
 
 /**

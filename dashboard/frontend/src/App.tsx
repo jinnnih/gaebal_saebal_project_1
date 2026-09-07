@@ -16,8 +16,8 @@ export default function App() {
   if (error) return <div className="fatal">레이아웃을 불러오지 못했습니다: {error}</div>;
   if (!layout || !metrics) return <div className="loading">불러오는 중…</div>;
 
-  const onCreate = async (tag: string, kind: 'PARK' | 'RETRIEVE') => {
-    await createRequest(tag, kind);
+  const onCreate = async (tag: string, kind: 'PARK' | 'RETRIEVE', spotId?: string | null) => {
+    await createRequest(tag, kind, spotId);
     await refresh();
   };
   const onCancel = async (id: number) => {

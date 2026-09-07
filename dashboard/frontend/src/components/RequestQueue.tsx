@@ -11,7 +11,7 @@ const KO: Record<RequestStatus, string> = {
 interface Props {
   requests: RequestRow[];
   readOnly: boolean;
-  onCreate: (tag: string, kind: 'PARK' | 'RETRIEVE') => Promise<void>;
+  onCreate: (tag: string, kind: 'PARK' | 'RETRIEVE', spotId?: string | null) => Promise<void>;
   onCancel: (id: number) => Promise<void>;
   onHover: (spotId: string | null) => void;
 }
@@ -19,17 +19,32 @@ interface Props {
 export function RequestQueue({ requests, readOnly, onCreate, onCancel, onHover }: Props) {
   const [tag, setTag] = useState('');
   const [kind, setKind] = useState<'PARK' | 'RETRIEVE'>('PARK');
+  const [retrieveId, setRetrieveId] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // 출차는 세워 둔 차 중에서 고른다. 번호를 직접 치게 하면 오타로 실패한다.
+  const parked = requests.filter((r) => r.status === 'PARKED' && r.assigned_spot_id);
+  const picked = parked.find((r) => String(r.id) === retrieveId);
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!tag.trim()) return;
     setBusy(true); setErr(null);
-    try { await onCreate(tag.trim(), kind); setTag(''); }
-    catch (e: any) { setErr(e.message ?? '요청 실패'); }
+    try {
+      if (kind === 'PARK') {
+        if (!tag.trim()) return;
+        await onCreate(tag.trim(), 'PARK');
+        setTag('');
+      } else {
+        if (!picked) return;
+        await onCreate(picked.vehicle_tag, 'RETRIEVE', picked.assigned_spot_id);
+        setRetrieveId('');
+      }
+    } catch (e: any) { setErr(e.message ?? '요청 실패'); }
     finally { setBusy(false); }
   };
+
+  const canSubmit = kind === 'PARK' ? !!tag.trim() : !!picked;
 
   const active = requests.filter((r) => ACTIVE.includes(r.status));
   const done = requests.filter((r) => !ACTIVE.includes(r.status));
@@ -41,9 +56,23 @@ export function RequestQueue({ requests, readOnly, onCreate, onCancel, onHover }
           <option value="PARK">입차</option>
           <option value="RETRIEVE">출차</option>
         </select>
-        <input value={tag} onChange={(e) => setTag(e.target.value)}
-               placeholder="차량번호 (예: 12가3456)" disabled={readOnly} />
-        <button type="submit" disabled={readOnly || busy || !tag.trim()}>
+        {kind === 'PARK' ? (
+          <input value={tag} onChange={(e) => setTag(e.target.value)}
+                 placeholder="차량번호 (예: 12가3456)" disabled={readOnly} />
+        ) : (
+          <select value={retrieveId} onChange={(e) => setRetrieveId(e.target.value)}
+                  disabled={readOnly || parked.length === 0}>
+            <option value="">
+              {parked.length ? '차량 선택' : '주차된 차량 없음'}
+            </option>
+            {parked.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.vehicle_tag} · {r.assigned_spot_id}
+              </option>
+            ))}
+          </select>
+        )}
+        <button type="submit" disabled={readOnly || busy || !canSubmit}>
           {busy ? '요청 중…' : '요청'}
         </button>
       </form>
@@ -56,6 +85,7 @@ export function RequestQueue({ requests, readOnly, onCreate, onCancel, onHover }
         {active.map((r) => (
           <li key={r.id} onPointerEnter={() => onHover(r.assigned_spot_id)}
               onPointerLeave={() => onHover(null)}>
+            <span className={`chip k-${r.kind}`}>{r.kind === 'PARK' ? '입차' : '출차'}</span>
             <span className={`chip s-${r.status}`}>{KO[r.status]}</span>
             <b>{r.vehicle_tag}</b>
             <span className="muted">{r.assigned_spot_id ?? '면 배정 전'}</span>

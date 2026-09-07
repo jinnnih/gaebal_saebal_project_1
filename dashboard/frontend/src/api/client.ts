@@ -55,11 +55,13 @@ export async function fetchState(layout: Layout): Promise<{
   };
 }
 
-export async function createRequest(vehicleTag: string, kind: 'PARK' | 'RETRIEVE') {
+export async function createRequest(
+  vehicleTag: string, kind: 'PARK' | 'RETRIEVE', spotId?: string | null,
+) {
   const res = await fetch('/api/requests', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ vehicle_tag: vehicleTag, kind }),
+    body: JSON.stringify({ vehicle_tag: vehicleTag, kind, spot_id: spotId ?? null }),
   });
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? '요청 실패');
   return res.json();
