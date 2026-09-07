@@ -1,0 +1,16 @@
+# ! PGM 맵은 바이너리다. 이 줄이 없으면 git 이 speed_mask.pgm 을 텍스트로
+#   오판해서(값 대부분이 ASCII 범위라) 윈도우 체크아웃 때 0x0A 를 0x0D0A 로
+#   바꿔 맵을 조용히 망가뜨린다. 크기가 안 맞아 map_server 가 실패한다.
+*.pgm  binary
+*.png  binary
+*.obj  binary
+
+# 나머지는 저장소에 LF 로 저장한다 (ROS 는 리눅스에서 돌고, 셸 스크립트가
+# CRLF 면 "bad interpreter" 로 실행이 안 된다)
+*        text=auto eol=lf
+*.sh     text eol=lf
+*.py     text eol=lf
+*.xacro  text eol=lf
+*.sdf    text eol=lf
+*.xml    text eol=lf
+*.yaml   text eol=lf
