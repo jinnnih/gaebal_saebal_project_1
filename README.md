@@ -48,34 +48,38 @@ git merge main
 
 ## 디렉터리 구조
 
-### `ks` — 로봇 / Nav2
+### `ros/` — 로봇 / Nav2 (`ks` 담당)
 
 ```
-scripts/                 워크스페이스 개발용 실행 스크립트
-└── nav2_tests/          주행 시험 도구 (mppi_probe, path_check …)
-src/
-├── parking_lot_world/   주차장 월드 · 맵 · Nav2 파라미터 · 주차면 테이블
-└── valet_robot/         차량형 로봇 모델 + ros2_control 구성
+ros/
+├── scripts/                 워크스페이스 개발용 실행 스크립트
+│   └── nav2_tests/          주행 시험 도구 (mppi_probe, path_check …)
+└── src/
+    ├── parking_lot_world/   주차장 월드 · 맵 · Nav2 파라미터 · 주차면 테이블
+    └── valet_robot/         차량형 로봇 모델 + ros2_control 구성
 ```
 
-`src/` 가 colcon 워크스페이스 루트라 ROS 패키지는 반드시 그 아래에 둔다.
+`ros/src/` 가 colcon 워크스페이스 루트라 ROS 패키지는 반드시 그 아래에 둔다.
+`colcon build` 는 `ros/` 에서 실행한다.
 패키지별 상세는 각 README 에 있다.
 
 * `src/valet_robot/README.md` — 로봇 제원 · 설계 근거 · 실측값 · 환경 이슈
 * `src/parking_lot_world/README.md` — 주차장 사양 · 주차면 데이터 · Nav2 설정 근거
 * `src/valet_robot/meshes/README.md` — 차량 외형 메시 출처와 변형 방법
 
-### `hj` — 관제 대시보드
+### 관제 대시보드 (`hj` 담당)
 
 ```
-dashboard/
-├── frontend/            React 19 + Vite 7
-│   └── src/  api/  hooks/  components/  types/  styles/
-├── backend/             Express 5 + mysql2
-│   └── src/  routes/  ros/  middleware/
-├── db/                  MySQL 스키마 · seed
-└── tools/               rosbridge 목 서버 · 문서 스냅샷 생성기
+frontend/            React 19 + Vite 7
+└── src/  api/  hooks/  components/  types/  styles/
+backend/             Express 5 + mysql2
+├── src/  routes/  ros/  middleware/
+└── tools/           rosbridge 목 서버 · 문서 스냅샷 생성기
+db/                  MySQL 스키마 · seed
+docs/                생성된 스냅샷 이미지 (이슈·README 첨부용)
 ```
+
+`ros/setup/` 은 ROS 2 Jazzy 환경 설정 스크립트다. 실제 Ubuntu 에서 검증하지 않았다.
 
 디렉터리마다 README 를 둬서 그 안의 구조와 설계 의도를 적는다.
 `backend/src/ros/contract.ts` 가 토픽 계약을 코드로 옮긴 유일한 곳이다.
@@ -120,6 +124,7 @@ dashboard/
 ### 로봇 (Ubuntu 24.04 + ROS 2 Jazzy)
 
 ```bash
+cd ros
 colcon build --packages-select parking_lot_world valet_robot
 source install/setup.bash
 ```
@@ -142,7 +147,6 @@ GUI 는 서버와 별개 프로세스로 띄운다. 이렇게 하면 깜빡임 �
 ### 관제 대시보드 (macOS / Linux)
 
 ```bash
-cd dashboard
 npm install
 ```
 
