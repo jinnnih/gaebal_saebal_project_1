@@ -29,6 +29,7 @@ install(PROGRAMS
   tools/smoke_probe.py
   tools/preview_model.py
   scripts/park_action_server.py
+  scripts/spot_manager.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

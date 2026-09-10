@@ -81,7 +81,10 @@ class ParkServer(Node):
         self.odom = None
         self._goal_lock = threading.Lock()
         self._fb = None                 # 현재 goal handle (피드백용)
-        self._shunt_last = 0.0
+        self._shunt_sign = 0
+        self._shunt_since = 0.0
+        self._shunt_counted = False
+        self._shunt_prev = None
         self.shunts = 0
 
         cb = ReentrantCallbackGroup()
@@ -122,12 +125,27 @@ class ParkServer(Node):
 
     # ------------- 피드백 / 전후진 전환 계수 -------------
     def publish_cmd(self, tw):
-        """명령을 내면서 전후진 전환을 센다."""
+        """명령을 내면서 전후진 전환을 센다.
+
+        ! 채터링 제거는 #9 Q8 에서 확정된 대로다.
+              |vx| < 0.05 m/s 는 무시 (정지 구간)
+              부호가 0.3 s 이상 유지될 때만 1 회로 계수
+          이게 없으면 감속 구간의 미세한 부호 흔들림이 전부 세어진다.
+        """
         v = tw.linear.x
-        if abs(v) > 0.02 and abs(self._shunt_last) > 0.02 and                 v * self._shunt_last < 0:
-            self.shunts += 1
-        if abs(v) > 0.02:
-            self._shunt_last = v
+        now = time.time()
+        if abs(v) < 0.05:
+            self.cmd.publish(tw); return
+        sign = 1 if v > 0 else -1
+        if sign != self._shunt_sign:
+            self._shunt_sign = sign
+            self._shunt_since = now
+            self._shunt_counted = False
+        elif not self._shunt_counted and now - self._shunt_since >= 0.3:
+            self._shunt_counted = True
+            if self._shunt_prev is not None and sign != self._shunt_prev:
+                self.shunts += 1
+            self._shunt_prev = sign
         self.cmd.publish(tw)
 
     def feedback(self, phase, remaining=-1.0):
@@ -438,7 +456,9 @@ class ParkServer(Node):
         with self._goal_lock:
             self._fb = goal_handle
             self.shunts = 0
-            self._shunt_last = 0.0
+            self._shunt_sign = 0
+            self._shunt_prev = None
+            self._shunt_counted = False
             try:
                 if not self.wait_odom():
                     res.success = False; res.message = '/odom 없음'
