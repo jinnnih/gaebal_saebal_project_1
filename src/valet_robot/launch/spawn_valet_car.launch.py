@@ -50,11 +50,13 @@ def generate_launch_description():
     cmd_vel_stamped = LaunchConfiguration('cmd_vel_stamped')
     use_rviz = LaunchConfiguration('rviz')
     use_lidar = LaunchConfiguration('lidar')
+    use_camera = LaunchConfiguration('camera')
 
     robot_description = ParameterValue(
         Command(['xacro ', xacro_file,
                  ' sim:=true',
                  ' lidar:=', use_lidar,
+                 ' camera:=', use_camera,
                  ' controllers_file:=', controllers]),
         value_type=str)
 
@@ -128,6 +130,8 @@ def generate_launch_description():
         # lidar:=false 로 두면 라이다 없이 뜬다. 렌더링이 막힌 환경에서
         # 물리/제어만 검증할 때 쓴다 (/dev/dri 권한 없을 때 등).
         DeclareLaunchArgument('lidar', default_value='true'),
+        # camera:=false 로 두면 RGBD 를 빼고 뜬다 (렌더링 부하 절감).
+        DeclareLaunchArgument('camera', default_value='true'),
 
         rsp,
         bridge,

@@ -10,6 +10,26 @@
   gz_type_name: "gz.msgs.LaserScan"
   direction: GZ_TO_ROS
 
+# 전방 RGBD — 영상은 대시보드용, 포인트클라우드는 costmap obstacle_layer 용
+- ros_topic_name: "/front_cam/image"
+  gz_topic_name: "/front_cam/image"
+  ros_type_name: "sensor_msgs/msg/Image"
+  gz_type_name: "gz.msgs.Image"
+  direction: GZ_TO_ROS
+
+- ros_topic_name: "/front_cam/camera_info"
+  gz_topic_name: "/front_cam/camera_info"
+  ros_type_name: "sensor_msgs/msg/CameraInfo"
+  gz_type_name: "gz.msgs.CameraInfo"
+  direction: GZ_TO_ROS
+
+# ! gz 쪽 타입은 PointCloudPacked 다. PointCloud 로 적으면 조용히 안 붙는다.
+- ros_topic_name: "/front_cam/points"
+  gz_topic_name: "/front_cam/points"
+  ros_type_name: "sensor_msgs/msg/PointCloud2"
+  gz_type_name: "gz.msgs.PointCloudPacked"
+  direction: GZ_TO_ROS
+
 # IMU (선택 — robot_localization 확장 시 사용)
 - ros_topic_name: "/imu"
   gz_topic_name: "/imu"

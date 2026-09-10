@@ -4,6 +4,8 @@
 
      발행 토픽 (gz)      -> ros_gz_bridge 로 ROS 2 에 넘어감
        /scan             sensor_msgs/LaserScan   (AMCL, costmap obstacle_layer)
+       /front_cam/image  sensor_msgs/Image
+       /front_cam/points sensor_msgs/PointCloud2 (costmap obstacle_layer)
        /imu              sensor_msgs/Imu
        /odom             nav_msgs/Odometry       (odom -> base_footprint)
        /tf_gz            tf2_msgs/TFMessage      (odom -> base_footprint)
@@ -21,7 +23,7 @@
     </gazebo>
   </xacro:macro>
 
-  <xacro:macro name="valet_gazebo" params="lidar:=true">
+  <xacro:macro name="valet_gazebo" params="lidar:=true camera:=true">
 
     <!-- ========== 바퀴 접촉 물성 ========== -->
     <xacro:wheel_surface link="front_left_wheel_link"/>
@@ -60,6 +62,48 @@
               <stddev>0.012</stddev>
             </noise>
           </lidar>
+        </sensor>
+      </gazebo>
+    </xacro:if>
+
+    <xacro:if value="${camera}">
+      <!-- ========== 전방 하향 RGBD ==========
+           2D 라이다는 절대 1.42 m 한 평면만 본다. 그 아래는 전부 사각이라
+           월드의 트래픽 콘(높이 0.55 m)조차 안 보인다. 지금 콘을 피하는 건
+           센서가 아니라 정적 맵에 미리 칠해 둔 덕이다
+           (generate_parking_lot.py 의 fill_box(..., OCC)).
+           런타임에 생기는 낮은 장애물은 못 본다. 그걸 이 카메라가 덮는다.
+
+           ! 해상도와 주기를 올리지 말 것. 소프트웨어 렌더링이라 비싸다.
+             320x240 @ 10 Hz 에서 포인트가 초당 768k 나온다. 이미 GUI 만
+             켜도 3 코어를 먹는 VM 이다. -->
+      <gazebo reference="camera_link">
+        <sensor name="front_cam" type="rgbd_camera">
+          <topic>front_cam</topic>
+          <!-- ! 포인트클라우드의 frame_id 는 camera_link(차체 규약) 여야 한다.
+               gz 의 rgbd_camera 는 점을 x=전방 / y=좌 / z=상 으로 낸다.
+               ROS 카메라 규약(z=전방)이 아니다. 여기에 광학 프레임 이름을
+               찍으면 TF 가 회전을 한 번 더 걸어서 구름이 통째로 눕는다.
+               (실측: 지면 점이 z -8 m 로 내려가고 콘이 사라졌다.
+                원시 좌표의 x 가 1.14~14.06 인 것으로 확인 — 깊이 축이 x 다.)
+               optical_frame_id 를 쓰면 안 된다. 그게 포인트클라우드의
+               frame_id 까지 덮어써서 gz_frame_id 가 무시된다 (실측). -->
+          <gz_frame_id>camera_link</gz_frame_id>
+          <update_rate>10</update_rate>
+          <always_on>true</always_on>
+          <visualize>false</visualize>
+          <camera>
+            <horizontal_fov>1.2217</horizontal_fov>   <!-- 70 deg -->
+            <image>
+              <width>320</width>
+              <height>240</height>
+              <format>R8G8B8</format>
+            </image>
+            <clip>
+              <near>0.3</near>
+              <far>15.0</far>
+            </clip>
+          </camera>
         </sensor>
       </gazebo>
     </xacro:if>

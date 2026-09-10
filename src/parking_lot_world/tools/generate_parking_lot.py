@@ -1444,7 +1444,7 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
-        observation_sources: scan
+        observation_sources: scan pointcloud
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -1453,6 +1453,26 @@ global_costmap:
           data_type: "LaserScan"
           raytrace_max_range: 30.0
           obstacle_max_range: 25.0
+        # ! 전방 RGBD 포인트클라우드. 2D 라이다는 절대 1.42 m 한 평면만
+        #   보기 때문에 그 아래 물체가 존재하지 않는 것과 같다. 실측으로
+        #   4 m 앞 트래픽 콘(높이 0.55)을 라이다는 전혀 못 잡았고
+        #   (전방 +-14 도 최소거리 8.13 m) 카메라는 3742 점으로 잡았다.
+        #
+        #   min_obstacle_height 를 반드시 둘 것. 하향 카메라라 구름의
+        #   78 % (67013 중 52196 점) 가 지면이다. 이 필터가 없으면 바닥을
+        #   장애물로 찍어서 로봇이 제자리에서 멈춘다.
+        #   높이는 코스트맵 global_frame 기준 z 로 판정한다.
+        pointcloud:
+          topic: /front_cam/points
+          data_type: "PointCloud2"
+          min_obstacle_height: 0.12
+          max_obstacle_height: 2.0
+          clearing: true
+          marking: true
+          obstacle_min_range: 0.5
+          raytrace_min_range: 0.5
+          raytrace_max_range: 12.0
+          obstacle_max_range: 10.0
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         # ! 풋프린트 4.6 x 2.0 -> 내접원 1.03 m / 외접원 2.55 m.
@@ -1512,7 +1532,7 @@ local_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
-        observation_sources: scan
+        observation_sources: scan pointcloud
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -1521,6 +1541,26 @@ local_costmap:
           data_type: "LaserScan"
           raytrace_max_range: 20.0
           obstacle_max_range: 16.0
+        # ! 전방 RGBD 포인트클라우드. 2D 라이다는 절대 1.42 m 한 평면만
+        #   보기 때문에 그 아래 물체가 존재하지 않는 것과 같다. 실측으로
+        #   4 m 앞 트래픽 콘(높이 0.55)을 라이다는 전혀 못 잡았고
+        #   (전방 +-14 도 최소거리 8.13 m) 카메라는 3742 점으로 잡았다.
+        #
+        #   min_obstacle_height 를 반드시 둘 것. 하향 카메라라 구름의
+        #   78 % (67013 중 52196 점) 가 지면이다. 이 필터가 없으면 바닥을
+        #   장애물로 찍어서 로봇이 제자리에서 멈춘다.
+        #   높이는 코스트맵 global_frame 기준 z 로 판정한다.
+        pointcloud:
+          topic: /front_cam/points
+          data_type: "PointCloud2"
+          min_obstacle_height: 0.12
+          max_obstacle_height: 2.0
+          clearing: true
+          marking: true
+          obstacle_min_range: 0.5
+          raytrace_min_range: 0.5
+          raytrace_max_range: 12.0
+          obstacle_max_range: 10.0
       keepout_filter:
         plugin: "nav2_costmap_2d::KeepoutFilter"
         enabled: true

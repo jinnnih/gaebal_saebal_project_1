@@ -25,6 +25,8 @@
   <!-- 라이다를 뺀 채로 띄우고 싶을 때 (렌더링 없이 물리/제어만 검증). -->
   <xacro:arg name="lidar" default="true"/>
   <!-- mesh:=false 면 외형이 박스 조합으로 나온다 (메시 없이 확인할 때). -->
+  <!-- 전방 RGBD 카메라. 렌더링 부하가 커서 끌 수 있게 둔다. -->
+  <xacro:arg name="camera" default="true"/>
   <xacro:arg name="mesh" default="true"/>
   <xacro:arg name="controllers_file"
              default="$(find valet_robot)/config/controllers.yaml"/>
@@ -88,6 +90,37 @@
     </joint>
   </xacro:if>
 
+  <!-- 전방 하향 RGBD (치수 근거는 common.xacro) -->
+  <xacro:if value="$(arg camera)">
+    <link name="camera_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.04 0.10 0.04"/></geometry>
+        <material name="valet_sensor"/>
+      </visual>
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <mass value="0.15"/>
+        <inertia ixx="1e-4" ixy="0" ixz="0" iyy="1e-4" iyz="0" izz="1e-4"/>
+      </inertial>
+    </link>
+    <joint name="camera_joint" type="fixed">
+      <parent link="base_link"/>
+      <child  link="camera_link"/>
+      <origin xyz="${cam_x} 0 ${cam_z}" rpy="0 ${cam_pitch} 0"/>
+    </joint>
+
+    <!-- ! 광학 프레임을 따로 둔다. ROS 의 카메라 규약은 z 가 앞,
+         x 가 오른쪽, y 가 아래인데 URDF 링크는 x 가 앞이다. 이걸 안 맞추면
+         포인트클라우드가 90 도 누워서 코스트맵에 엉뚱하게 찍힌다. -->
+    <link name="camera_optical_link"/>
+    <joint name="camera_optical_joint" type="fixed">
+      <parent link="camera_link"/>
+      <child  link="camera_optical_link"/>
+      <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}"/>
+    </joint>
+  </xacro:if>
+
   <link name="imu_link">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -106,7 +139,7 @@
     <xacro:include filename="valet_car.ros2_control.xacro"/>
     <xacro:include filename="sensors.gazebo.xacro"/>
     <xacro:valet_ros2_control controllers_file="$(arg controllers_file)"/>
-    <xacro:valet_gazebo lidar="$(arg lidar)"/>
+    <xacro:valet_gazebo lidar="$(arg lidar)" camera="$(arg camera)"/>
   </xacro:if>
 
 </robot>
