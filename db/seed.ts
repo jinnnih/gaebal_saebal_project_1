@@ -14,8 +14,10 @@ import { resolve } from 'node:path';
 import mysql from 'mysql2/promise';
 
 const ROOT = resolve(import.meta.dirname, '..');
-const REPO_ROOT = resolve(ROOT, '..');
-const SPOTS_IN_REPO = 'src/parking_lot_world/config/parking_spots.json';
+const REPO_ROOT = ROOT;   // 저장소 루트 = project_1
+/** 통합 후 로봇 패키지가 놓일 자리. 아직 병합 전이라 없으면 ks 브랜치에서 읽는다. */
+const SPOTS_LOCAL = 'ros/src/parking_lot_world/config/parking_spots.json';
+const SPOTS_ON_KS = 'src/parking_lot_world/config/parking_spots.json';
 
 type Spot = {
   id: string; row: string; index: number;
@@ -29,13 +31,13 @@ function loadSpotsJson(): { raw: string; source: string } {
   const arg = process.argv.find((a) => a.endsWith('.json'));
   if (arg) return { raw: readFileSync(arg, 'utf8'), source: arg };
 
-  const local = resolve(REPO_ROOT, SPOTS_IN_REPO);
-  if (existsSync(local)) return { raw: readFileSync(local, 'utf8'), source: SPOTS_IN_REPO };
+  const local = resolve(REPO_ROOT, SPOTS_LOCAL);
+  if (existsSync(local)) return { raw: readFileSync(local, 'utf8'), source: SPOTS_LOCAL };
 
   return {
-    raw: execFileSync('git', ['show', `origin/ks:${SPOTS_IN_REPO}`],
+    raw: execFileSync('git', ['show', `origin/ks:${SPOTS_ON_KS}`],
       { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 32 << 20 }),
-    source: `origin/ks:${SPOTS_IN_REPO}`,
+    source: `origin/ks:${SPOTS_ON_KS}`,
   };
 }
 

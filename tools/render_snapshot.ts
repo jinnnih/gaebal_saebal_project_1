@@ -16,8 +16,10 @@ import { resolve } from 'node:path';
 import mysql from 'mysql2/promise';
 
 const ROOT = resolve(import.meta.dirname, '..');
-const REPO_ROOT = resolve(ROOT, '..');
-const SPOTS_IN_REPO = 'src/parking_lot_world/config/parking_spots.json';
+const REPO_ROOT = ROOT;   // 저장소 루트 = project_1
+/** 통합 후 로봇 패키지가 놓일 자리. 아직 병합 전이라 없으면 ks 브랜치에서 읽는다. */
+const SPOTS_LOCAL = 'ros/src/parking_lot_world/config/parking_spots.json';
+const SPOTS_ON_KS = 'src/parking_lot_world/config/parking_spots.json';
 const OUT = resolve(ROOT, 'docs/dashboard.svg');
 
 const C = {
@@ -30,9 +32,9 @@ const KO = { FREE: '공차', OCCUPIED: '점유', RESERVED: '예약', BLOCKED: '�
 const FONT = "'Helvetica Neue', Helvetica, 'Apple SD Gothic Neo', sans-serif";
 
 const layout = JSON.parse(
-  existsSync(resolve(REPO_ROOT, SPOTS_IN_REPO))
-    ? readFileSync(resolve(REPO_ROOT, SPOTS_IN_REPO), 'utf8')
-    : execFileSync('git', ['show', `origin/ks:${SPOTS_IN_REPO}`],
+  existsSync(resolve(REPO_ROOT, SPOTS_LOCAL))
+    ? readFileSync(resolve(REPO_ROOT, SPOTS_LOCAL), 'utf8')
+    : execFileSync('git', ['show', `origin/ks:${SPOTS_ON_KS}`],
         { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 32 << 20 }));
 
 const db = await mysql.createConnection({

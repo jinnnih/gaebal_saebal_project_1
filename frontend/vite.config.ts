@@ -4,8 +4,10 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const REPO_ROOT = resolve(import.meta.dirname, '../..');
-const SPOTS_IN_REPO = 'src/parking_lot_world/config/parking_spots.json';
+const REPO_ROOT = resolve(import.meta.dirname, '..');
+/** 통합 후 로봇 패키지가 놓일 자리. 아직 병합 전이라 없으면 ks 브랜치에서 읽는다. */
+const SPOTS_LOCAL = 'ros/src/parking_lot_world/config/parking_spots.json';
+const SPOTS_ON_KS = 'src/parking_lot_world/config/parking_spots.json';
 
 /**
  * 개발 중 /parking_spots.json 을 ks 브랜치의 원본에서 바로 서빙한다.
@@ -19,10 +21,10 @@ function parkingLayout(): Plugin {
     name: 'valet-parking-layout',
     configureServer(server) {
       server.middlewares.use('/parking_spots.json', (_req, res) => {
-        const local = resolve(REPO_ROOT, SPOTS_IN_REPO);
+        const local = resolve(REPO_ROOT, SPOTS_LOCAL);
         const json = existsSync(local)
           ? readFileSync(local, 'utf8')
-          : execFileSync('git', ['show', `origin/ks:${SPOTS_IN_REPO}`],
+          : execFileSync('git', ['show', `origin/ks:${SPOTS_ON_KS}`],
               { cwd: REPO_ROOT, encoding: 'utf8', maxBuffer: 32 << 20 });
         res.setHeader('content-type', 'application/json; charset=utf-8');
         res.end(json);

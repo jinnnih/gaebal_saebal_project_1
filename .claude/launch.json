@@ -4,13 +4,13 @@
     {
       "name": "dashboard-web",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace=frontend", "--prefix", "dashboard"],
+      "runtimeArgs": ["run", "dev", "--workspace=frontend"],
       "port": 5173
     },
     {
       "name": "dashboard-api",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--workspace=backend", "--prefix", "dashboard"],
+      "runtimeArgs": ["run", "dev", "--workspace=backend"],
       "port": 5174
     }
   ]
