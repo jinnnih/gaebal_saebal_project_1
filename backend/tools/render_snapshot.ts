@@ -15,7 +15,7 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import mysql from 'mysql2/promise';
 
-const ROOT = resolve(import.meta.dirname, '..');
+const ROOT = resolve(import.meta.dirname, '../..');   // 저장소 루트
 const REPO_ROOT = ROOT;   // 저장소 루트 = project_1
 /** 통합 후 로봇 패키지가 놓일 자리. 아직 병합 전이라 없으면 ks 브랜치에서 읽는다. */
 const SPOTS_LOCAL = 'ros/src/parking_lot_world/config/parking_spots.json';

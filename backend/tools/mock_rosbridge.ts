@@ -19,7 +19,7 @@ import { resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 
 const PORT = Number(process.env.MOCK_PORT ?? 9090);
-const REPO_ROOT = resolve(import.meta.dirname, '..');
+const REPO_ROOT = resolve(import.meta.dirname, '../..');
 /** 통합 후 로봇 패키지가 놓일 자리. 아직 병합 전이라 없으면 ks 브랜치에서 읽는다. */
 const SPOTS_LOCAL = 'ros/src/parking_lot_world/config/parking_spots.json';
 const SPOTS_ON_KS = 'src/parking_lot_world/config/parking_spots.json';

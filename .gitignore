@@ -26,3 +26,8 @@ __pycache__/
 .DS_Store
 Thumbs.db
 *.log
+
+# 개인 폴더 정리·도구 설정 (저장소와 무관)
+plan/
+.claude/
+.DS_Store

@@ -73,12 +73,13 @@ ros/
 frontend/            React 19 + Vite 7
 └── src/  api/  hooks/  components/  types/  styles/
 backend/             Express 5 + mysql2
-└── src/  routes/  ros/  middleware/
+├── src/  routes/  ros/  middleware/
+└── tools/           rosbridge 목 서버 · 문서 스냅샷 생성기
 db/                  MySQL 스키마 · seed
-tools/               rosbridge 목 서버 · 문서 스냅샷 생성기
-docs/                문서용 스냅샷 · 대시보드 상세 설명
-plan/                계획서
+docs/                생성된 스냅샷 이미지 (이슈·README 첨부용)
 ```
+
+`ros/setup/` 은 ROS 2 Jazzy 환경 설정 스크립트다. 실제 Ubuntu 에서 검증하지 않았다.
 
 디렉터리마다 README 를 둬서 그 안의 구조와 설계 의도를 적는다.
 `backend/src/ros/contract.ts` 가 토픽 계약을 코드로 옮긴 유일한 곳이다.
