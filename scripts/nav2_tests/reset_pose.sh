@@ -48,11 +48,42 @@ else:
   echo "  set_pose 미반영 (시도 $try) — 재시도"
 done
 
-ros2 topic pub -1 /initialpose geometry_msgs/msg/PoseWithCovarianceStamped \
-  "{header: {frame_id: map}, pose: {pose: {position: {x: $X, y: $Y}, orientation: {z: $QZ, w: $QW}},
-    covariance: [0.25,0,0,0,0,0, 0,0.25,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
-                 0,0,0,0,0,0, 0,0,0,0,0,0.07]}}" > /dev/null 2>&1
-sleep 3
+# ! /initialpose 도 확인하고 재시도해야 한다. gz 는 옮겼는데 AMCL 이 안
+#   따라오면 플래너가 옛 위치(주차면 안)를 출발점으로 잡고
+#     GridBased plugin failed to plan from (0.60, -16.13) to (...):
+#     "no valid path found"
+#   으로 죽는다. 앞의 /odom 확인은 이걸 못 잡는다. 플래너가 보는 건
+#   /odom 이 아니라 AMCL 추정치다.
+#   원인은 `ros2 topic pub -1` 이 구독자 매칭을 안 기다리고 한 번 쏘고
+#   끝나는 것. 디스커버리가 늦으면 (부하가 높을수록 잦다) 메시지가 그냥
+#   사라진다. -w 1 로 구독자를 기다리고, 그래도 안 되면 다시 쏜다.
+AOK=?
+for try in 1 2 3; do
+  timeout 20 ros2 topic pub -1 -w 1 /initialpose \
+    geometry_msgs/msg/PoseWithCovarianceStamped \
+    "{header: {frame_id: map}, pose: {pose: {position: {x: $X, y: $Y}, orientation: {z: $QZ, w: $QW}},
+      covariance: [0.25,0,0,0,0,0, 0,0.25,0,0,0,0, 0,0,0,0,0,0, 0,0,0,0,0,0,
+                   0,0,0,0,0,0, 0,0,0,0,0,0.07]}}" > /dev/null 2>&1
+  sleep 3
+  AOK=$(timeout 20 python3 -c "
+import math,time,rclpy
+from geometry_msgs.msg import PoseWithCovarianceStamped
+from rclpy.qos import QoSProfile, DurabilityPolicy
+rclpy.init(); n=rclpy.create_node('rpa'); got=[]
+q=QoSProfile(depth=1); q.durability=DurabilityPolicy.TRANSIENT_LOCAL
+n.create_subscription(PoseWithCovarianceStamped,'/amcl_pose',
+                      lambda m: got.append(m), q)
+t=time.time()
+while time.time()-t<8 and not got: rclpy.spin_once(n,timeout_sec=0.2)
+if got:
+    p=got[-1].pose.pose.position
+    print('1' if math.dist((p.x,p.y),($X,$Y))<0.5 else '0')
+else:
+    print('?')
+" 2>/dev/null)
+  [ "$AOK" = "1" ] && break
+  echo "  /initialpose 미반영 (시도 $try, amcl=$AOK) — 재시도"
+done
 
 # ! 코스트맵도 비운다. 순간이동을 반복하면 전역 코스트맵의 obstacle_layer 에
 #   옛 위치에서 찍힌 장애물 표시가 남는다. 라이다가 새 위치에서는 그 셀을
@@ -64,4 +95,4 @@ for svc in /global_costmap/clear_entirely_global_costmap            /local_costm
   timeout 10 ros2 service call "$svc" nav2_msgs/srv/ClearEntireCostmap     "{request: {}}" > /dev/null 2>&1
 done
 sleep 2
-echo "리셋 완료 -> ($X, $Y, $YAW rad)  [gz=$OK, AMCL 재초기화, 코스트맵 비움]"
+echo "리셋 완료 -> ($X, $Y, $YAW rad)  [gz=$OK, amcl=$AOK, 코스트맵 비움]"

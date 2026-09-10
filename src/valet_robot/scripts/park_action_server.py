@@ -25,8 +25,10 @@ ParkManeuver 를 따로 둔 이유다.
 
 ## 제어권
 
-주차 기동 동안 velocity_smoother 를 재우고 /cmd_vel_smoothed 로 직접 명령한다.
-그 노드가 20 Hz 로 0 을 계속 발행해서 그냥 쏘면 경합한다. 끝나면 돌려준다.
+주차 기동 명령은 velocity_smoother 의 입력인 /cmd_vel_nav 로 넣는다. Nav2 에
+목표가 없는 동안 그 토픽은 비어 있으므로 경합하지 않고, 스무더가 그대로
+흘려보내 /cmd_vel_smoothed 로 나간다. 라이프사이클은 건드리지 않는다
+(cmd_topic 파라미터의 주석 참고 — 그게 Nav2 를 통째로 무너뜨렸다).
 """
 import json
 import math
@@ -38,6 +40,7 @@ import time
 import rclpy
 from geometry_msgs.msg import PoseStamped, Twist
 from nav2_msgs.action import NavigateToPose
+from nav2_msgs.srv import ClearEntireCostmap
 from nav_msgs.msg import Odometry
 from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
@@ -67,17 +70,42 @@ class ParkServer(Node):
         self.set_parameters([rclpy.parameter.Parameter(
             'use_sim_time', rclpy.Parameter.Type.BOOL, True)])
 
-        self.declare_parameter('cmd_topic', '/cmd_vel_smoothed')
-        self.declare_parameter('turn_dx', 4.43)
-        self.declare_parameter('smoother_node', '/velocity_smoother')
+        # velocity_smoother 의 **입력** 토픽. 여기에 넣으면 스무더가 그대로
+        # 흘려보내 /cmd_vel_smoothed 로 나가고 twist_to_ackermann 이 받는다.
+        #
+        # ! 예전에는 /cmd_vel_smoothed 에 직접 쓰면서 스무더를
+        #   `ros2 lifecycle set /velocity_smoother deactivate` 로 재웠는데,
+        #   그게 Nav2 스택 전체를 무너뜨리고 있었다. 라이프사이클 노드를
+        #   수동으로 내리면 bond 가 끊기고 lifecycle_manager 가 이렇게 본다.
+        #
+        #     CRITICAL FAILURE: SERVER velocity_smoother IS DOWN after not
+        #     receiving a heartbeat for 4000 ms. Shutting down related nodes.
+        #
+        #   그러고는 관리 노드를 전부 리셋한다. 로그 하나에서만 16 번
+        #   일어났고, 부하가 걸리면 복구마저 실패해서
+        #   (Failed to change state for node: map_server. Aborting bringup)
+        #   그 뒤 모든 목표가 "Action server is inactive. Rejecting the goal"
+        #   으로 거부됐다. 접근 실패(status=6)와 실행 간 편차의 상당 부분이
+        #   여기서 나왔다. 라이프사이클은 lifecycle_manager 만 만진다.
+        self.declare_parameter('cmd_topic', '/cmd_vel_nav')
+        # 90 도 후진 선회의 시작 횡오차는 선회 반경 그 자체여야 한다.
+        # 뒤축 기준 최소 3.5704 이므로 base_link 기준으로는 그 + 1.25.
+        # 하한에 딱 맞추면 닫힌 루프가 반경을 줄이는 쪽으로 손을 못 쓰니
+        # 0.73 m 여유를 둬서 목표 반경을 4.30 으로 잡는다.
+        self.declare_parameter('turn_dx', 5.55)
+        # 선회 전에 통로를 따라 곧게 달려 자세를 잡을 거리
+        self.declare_parameter('pre_run', 4.0)
         g = self.get_parameter
         self.topic = g('cmd_topic').value
         self.turn_dx = float(g('turn_dx').value)
-        self.smoother = g('smoother_node').value
+        self.pre_run = float(g('pre_run').value)
 
         self.D = load_spots()
-        self.r_base = self.D['robot_spec'].get('min_turning_radius_base_link',
-                                               3.7829)
+        spec = self.D['robot_spec']
+        self.r_base = spec.get('min_turning_radius_base_link', 3.7829)
+        # 뒤축 기준 최소 반경과, base_link 가 뒤축보다 앞선 거리
+        self.r_rear = spec.get('min_turning_radius', 3.5704)
+        self.d_rear = spec.get('wheelbase', 2.5) / 2.0
         self.odom = None
         self._goal_lock = threading.Lock()
         self._fb = None                 # 현재 goal handle (피드백용)
@@ -102,6 +130,11 @@ class ParkServer(Node):
         self.navnode = rclpy.create_node('park_nav_client')
         self.navnode.set_parameters([rclpy.parameter.Parameter(
             'use_sim_time', rclpy.Parameter.Type.BOOL, True)])
+        self.clear_srv = [
+            self.navnode.create_client(
+                ClearEntireCostmap,
+                '/%s/clear_entirely_%s' % (n, n))
+            for n in ('local_costmap', 'global_costmap')]
         self.nav = ActionClient(self.navnode, NavigateToPose,
                                 'navigate_to_pose')
         self._navex = SingleThreadedExecutor()
@@ -199,6 +232,47 @@ class ParkServer(Node):
             if abs(e) < 0.35:
                 v *= 0.5
             tw.linear.x = v; tw.angular.z = 0.0
+            self.publish_cmd(tw)
+            time.sleep(0.05)
+        for _ in range(20):
+            self.publish_cmd(Twist()); time.sleep(0.02)
+        return self.pose()
+
+    def align_lane(self, target_x, lane_y, speed=0.22, k_e=0.35, k_s=0.8,
+                   r_min=3.7829, limit=90.0):
+        """통로 중심선을 따라 전진하며 x, y, yaw 를 한꺼번에 맞춘다.
+
+        ! 이게 주차 정확도 편차의 지배 항이었다. 예전 align_x 는 angular.z
+          를 0 으로 두고 "차가 동쪽을 본다"고 가정한 채 직진했는데, Nav2 의
+          기본 목표 허용오차가 yaw 0.50 rad 이라 접근이 끝난 시점의 방향이
+          실측에서 -37 도 ~ +11 도까지 흩어졌다. 그 상태로 직진하면 방향은
+          그대로인 채 y 까지 틀어지고, 선회 진입 psi 가 53 도 ~ 101 도로
+          벌어져 최종 오차가 0.17 m 와 1.15 m 로 갈렸다.
+
+        기준선 y = lane_y, 기준 방향 0 (동쪽) 을 두고 전진 추종하면
+        방향과 횡오차가 같이 수렴한다. 37 도에서 4 도까지 줄이는 데
+        ln(9.25)/k_s = 2.8 m 가 필요해서 pre_run 을 4 m 로 잡았다.
+        """
+        c = self.pose()
+        if c is not None and c[0] > target_x - 2.0:
+            # 조주 거리가 없으면 일단 거칠게 물러선다 (정밀도는 이 뒤에서)
+            self.align_x(target_x - 3.5, tol=0.20)
+        tw = Twist()
+        t0 = time.time()
+        while rclpy.ok() and time.time() - t0 < limit:
+            c = self.pose()
+            if c is None:
+                time.sleep(0.05); continue
+            remain = target_x - c[0]
+            if remain <= 0.0:
+                break
+            e = c[1] - lane_y                      # 좌횡오차
+            phi = -max(-0.20, min(0.20, k_e * e))  # 전진이라 부호 반대
+            psi = math.atan2(math.sin(phi - c[2]), math.cos(phi - c[2]))
+            v = abs(speed) * max(0.3, min(1.0, remain / 1.0))
+            w_max = v / r_min
+            tw.linear.x = v
+            tw.angular.z = max(-w_max, min(w_max, v * k_s * psi))
             self.publish_cmd(tw)
             time.sleep(0.05)
         for _ in range(20):
@@ -344,36 +418,135 @@ class ParkServer(Node):
 
     # ---------------- (예전) 직선 후진 ----------------
 
-    def reverse_turn(self, target_yaw, ccw, radius, speed=0.25, limit=90.0):
-        """목표 방향이 될 때까지 반경 radius 로 후진 선회한다.
+    # 이 각도 아래에서는 (1-cos psi) 가 너무 작아 보정 권한이 없다
+    PSI_HOLD = math.radians(15.0)
 
-        ! 열린 루프로 각도를 시간으로 계산하면 안 된다. 조향 지연과 슬립으로
-          어긋난다. odom 의 yaw 를 보고 닫는다.
+    def reverse_turn(self, target_yaw, ccw, radius, gx=None, gy=None,
+                     speed=0.25, limit=90.0):
+        """목표 방향이 될 때까지 후진 선회한다.
+
+        열린 루프(고정 반경)로 돌리면 종료 지점 횡오차가 0.28~0.54 m 씩
+        흔들리고, 그게 최종 주차 오차의 지배 항이 된다. gx, gy 를 주면
+        남은 회전각을 보고 매 주기 반경을 다시 잡는 닫힌 루프로 돈다.
+
+        ## 기하
+
+        후진(v<0) 중 횡오차 e 와 남은 회전각 psi 는
+
+            e_dot = v sin(psi),   psi_dot = w
+
+        이므로 de/dpsi = v sin(psi) / w 이고, psi 를 0 까지 적분하면
+
+            cw  (w<0):  e(0) = e - R (1 - cos psi)   =>  R = +e / (1 - cos psi)
+            ccw (w>0):  e(0) = e + R (1 - cos psi)   =>  R = -e / (1 - cos psi)
+
+        **선회 방향에 따라 부호가 반대다.** abs(e) 를 쓰면 cw 에서만 우연히
+        맞고 ccw 스팟(북쪽 통로, 전체의 절반)에서는 처음부터 틀린다.
+
+        ## 함정 셋, 전부 실측으로 데었다
+
+        1) 이 유도는 "속도 방향 == 차체 방향" 인 점에서만 성립한다. 그건
+           뒤축이지 base_link 가 아니다. base_link 는 휠베이스 중점이라
+           최소 반경 선회 중 슬립각이 atan(1.25/3.57)=17.8 도나 된다.
+           실측에서도 코드가 믿는 진행 방향과 실제 변위각이 15.6 도
+           어긋났다. 그래서 e, psi 를 전부 **뒤축 좌표**로 옮겨서 푼다.
+
+        2) e 의 부호를 버리면 발산한다. 중심선을 넘어간 뒤 |e| 가 커지면
+           R 이 커지고 -> 선회를 덜 하고 -> 기운 채 직진해서 -> |e| 가 더
+           커진다. 실측에서 psi 23 도에 e 0.00 이던 게 psi 5 도에 -0.99
+           까지 벌어졌다. 부호를 살리면 R 이 음수가 되어 하한으로 잡히고,
+           최대한 조여서 psi 를 빨리 죽이는 게 맞는 대응이 된다.
+
+        3) psi 가 작아지면 분모가 0 으로 가서 R 이 폭주한다. 하한만으로는
+           부족하고 PSI_HOLD 아래에서는 보정을 동결한다. 그 지점에 남은
+           횡방향 이동량은 R(1-cos 15도) = 0.12 m 뿐이라 잃는 게 없고,
+           잔차는 다음 단계 reverse_track 이 절반으로 줄인다.
         """
+        d = self.d_rear
+        lx, ly = -math.sin(target_yaw), math.cos(target_yaw)
+        sgn = -1.0 if ccw else 1.0
+        # 목표 자세에서의 뒤축 위치
+        gxr = gyr = 0.0
+        if gx is not None:
+            gxr = gx - d * math.cos(target_yaw)
+            gyr = gy - d * math.sin(target_yaw)
         tw = Twist()
-        tw.linear.x = -abs(speed)
-        # 후진(v<0)에서 좌조향이면 시계방향이다. w = v*tan(d)/L 이므로
-        # 원하는 회전 방향에 맞춰 부호를 준다.
-        tw.angular.z = (1.0 if ccw else -1.0) * abs(speed) / radius
+        r_hold = radius
+        prev = None
+        first = True
         t0 = time.time()
         while rclpy.ok() and time.time() - t0 < limit:
-            self.publish_cmd(tw)
-            time.sleep(0.05)
             c = self.pose()
             if c is None:
-                continue
-            d = math.atan2(math.sin(target_yaw - c[2]),
-                           math.cos(target_yaw - c[2]))
-            if abs(d) < math.radians(4.0):
+                time.sleep(0.05); continue
+            psi = math.atan2(math.sin(c[2] - target_yaw),
+                             math.cos(c[2] - target_yaw))
+            if abs(psi) < math.radians(4.0):
                 break
+            e = 0.0
+            if gx is not None:
+                xr = c[0] - d * math.cos(c[2])
+                yr = c[1] - d * math.sin(c[2])
+                e = (xr - gxr) * lx + (yr - gyr) * ly
+                if abs(psi) > self.PSI_HOLD:
+                    r_new = min(30.0, max(self.r_rear,
+                                          sgn * e / (1.0 - math.cos(psi))))
+                    # 오돔 잡음이 동결값을 튀게 하지 않도록 1차 저역통과
+                    r_hold = 0.7 * r_hold + 0.3 * r_new
+            # 뒤축 반경 -> base_link twist. twist_to_ackermann 이 다시
+            # 뒤축으로 환산하므로 wz = v / hypot(R_rear, d) 로 줘야 한다
+            tw.linear.x = -abs(speed)
+            tw.angular.z = -sgn * abs(speed) / math.hypot(r_hold, d)
+            self.publish_cmd(tw)
+            if os.environ.get('PARK_DEBUG') and first:
+                first = False
+                need = sgn * e / max(1.0 - math.cos(psi), 1e-6)
+                print('    TURN START  psi %+5.1f  e %+6.3f  R_need %6.2f'
+                      % (math.degrees(psi), e, need), flush=True)
+            if os.environ.get('PARK_DEBUG') and                     time.time() - getattr(self, '_dbgt', 0) > 1.0:
+                self._dbgt = time.time()
+                r_act = float('nan')
+                if prev is not None:
+                    dpsi = abs(math.atan2(math.sin(c[2] - prev[2]),
+                                          math.cos(c[2] - prev[2])))
+                    if dpsi > 1e-3:
+                        r_act = math.hypot(c[0] - prev[0],
+                                           c[1] - prev[1]) / dpsi
+                print('    TURN  psi %+5.1f  e %+6.3f  R_cmd %5.2f  '
+                      'R_act %5.2f  x %6.2f y %6.2f'
+                      % (math.degrees(psi), e, r_hold, r_act, c[0], c[1]),
+                      flush=True)
+                prev = c
+            time.sleep(0.05)
         for _ in range(20):
             self.publish_cmd(Twist()); time.sleep(0.02)
         return self.pose()
 
-    # ---------------- 출차: 전진 탈출 ----------------
-
     # ---------------- Nav2 접근 ----------------
-    def approach(self, x, y, yaw, phase, limit=300.0):
+    def clear_costmaps(self, wait=6.0):
+        """코스트맵을 비운다.
+
+        ! bt_navigator 의 복구 행동도 같은 서비스를 부르는데, 부하가 걸리면
+          그쪽이 먼저 터진다 (Node timed out while executing service call to
+          local_costmap/clear_entirely_local_costmap). 그러면 복구가 통째로
+          실패하고 목표가 status=6 으로 죽는다. 재시도 전에 직접 비운다.
+        """
+        for cli in self.clear_srv:
+            if not cli.wait_for_service(timeout_sec=wait):
+                continue
+            fut = cli.call_async(ClearEntireCostmap.Request())
+            t0 = time.time()
+            while not fut.done() and time.time() - t0 < wait:
+                time.sleep(0.1)
+
+    def approach(self, x, y, yaw, phase, limit=300.0, tries=2):
+        """Nav2 로 목표 자세까지 간다.
+
+        ! MPPI 가 간헐적으로 모든 표본을 버리고 (Optimizer fail to compute
+          path) 목표를 status=6 으로 중단시킨다. 부하가 높을 때 나오고,
+          같은 목표를 그대로 다시 쏘면 대개 통과한다. 코스트맵을 비우고
+          한 번 재시도한다.
+        """
         if not self.nav.wait_for_server(timeout_sec=20.0):
             return False, 'navigate_to_pose 서버 없음'
         g = NavigateToPose.Goal()
@@ -382,6 +555,19 @@ class ParkServer(Node):
         ps.pose.orientation.z = math.sin(yaw / 2.0)
         ps.pose.orientation.w = math.cos(yaw / 2.0)
         g.pose = ps
+        msg = ''
+        for attempt in range(tries):
+            if attempt:
+                self.get_logger().warn('접근 재시도 %d/%d — %s'
+                                       % (attempt + 1, tries, msg))
+                self.clear_costmaps()
+                time.sleep(2.0)
+            ok, msg = self._approach_once(g, x, y, phase, limit)
+            if ok:
+                return True, ''
+        return False, msg
+
+    def _approach_once(self, g, x, y, phase, limit):
         fut = self.nav.send_goal_async(g)
         t0 = time.time()
         while not fut.done() and time.time() - t0 < 20:
@@ -402,14 +588,6 @@ class ParkServer(Node):
             return False, '접근 실패 (status=%d)' % rf.result().status
         return True, ''
 
-    # ---------------- 제어권 ----------------
-    def smoother_set(self, action):
-        try:
-            subprocess.run(['ros2', 'lifecycle', 'set', self.smoother, action],
-                           capture_output=True, timeout=25)
-        except Exception:
-            pass
-
     # ---------------- 주차 ----------------
     def run_park(self, spot):
         gx, gy, gyaw = spot['goal_pose']
@@ -417,17 +595,15 @@ class ParkServer(Node):
         ccw = gyaw > 0.0
         appr_x = ax + self.turn_dx
 
-        ok, msg = self.approach(appr_x, ay, 0.0, 'APPROACH')
+        ok, msg = self.approach(appr_x - self.pre_run, ay, 0.0, 'APPROACH')
         if not ok:
             return ok, msg
-        self.smoother_set('deactivate'); time.sleep(1.5)
         self.feedback('ALIGN')
-        self.align_x(appr_x)
+        self.align_lane(appr_x, ay)
         self.feedback('TURN')
-        self.reverse_turn(gyaw, ccw, self.r_base)
+        self.reverse_turn(gyaw, ccw, self.r_rear, gx, gy)
         self.feedback('TRACK')
         self.reverse_track(gx, gy, gyaw)
-        self.smoother_set('activate')
         return True, ''
 
     # ---------------- 출차 ----------------
@@ -439,12 +615,11 @@ class ParkServer(Node):
         c = self.pose()
         if c is None:
             return False, '/odom 없음'
-        self.smoother_set('deactivate'); time.sleep(1.5)
         self.feedback('ESCAPE')
         self.forward_hold(gx, gy, gyaw, abs(c[1] - turn_start_y))
         self.feedback('TURN')
         self.forward_turn(0.0, ccw, self.r_base)
-        self.smoother_set('activate'); time.sleep(2.0)
+        time.sleep(2.0)
         ex = self.D['exit_pose']
         return self.approach(ex[0], ex[1], ex[2], 'EXIT', limit=420.0)
 
@@ -492,7 +667,6 @@ class ParkServer(Node):
                 if ok:
                     goal_handle.succeed()
                 else:
-                    self.smoother_set('activate')   # 실패해도 제어권은 돌려준다
                     goal_handle.abort()
             finally:
                 self._fb = None
