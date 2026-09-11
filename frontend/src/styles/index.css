@@ -30,7 +30,7 @@ main { display: grid; grid-template-columns: 1fr 320px; gap: 16px; padding: 16px
 .col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; }
 
-.map-wrap { position: relative; }
+.map-wrap { position: relative; width: 100%; }   /* flex 안에서도 폭을 다 쓴다 */
 .map { display: block; width: 100%; height: auto; max-height: calc(100vh - 140px); }
 .spot { cursor: pointer; transition: fill-opacity .12s; }
 .spot:hover { fill-opacity: 1 !important; }
@@ -98,3 +98,126 @@ main { display: grid; grid-template-columns: 1fr 320px; gap: 16px; padding: 16px
 
 .loading, .fatal { padding: 40px 20px; color: var(--muted); }
 .fatal { color: var(--blocked); }
+
+/* ═══════════════════════════════════════════════════════════════
+   창구 전환 — 개발·시연용. 실제 제품에서는 각 화면이 다른 기기에 뜬다.
+   ═══════════════════════════════════════════════════════════════ */
+.surface-switch {
+  position: fixed; top: 10px; left: 50%; transform: translateX(-50%); z-index: 20;
+  display: flex; gap: 2px; padding: 3px;
+  background: color-mix(in srgb, var(--panel) 85%, transparent);
+  border: 1px solid var(--line); border-radius: 999px; backdrop-filter: blur(8px);
+}
+.surface-switch a {
+  padding: 4px 12px; border-radius: 999px; font-size: 12px;
+  color: var(--muted); text-decoration: none;
+}
+.surface-switch a.active { background: var(--accent); color: #06121f; font-weight: 600; }
+.surface-switch a:hover:not(.active) { color: var(--fg); }
+
+/* ═══════════════════════════════════════════════════════════════
+   차 안 화면 (IVI) — 가로 와이드, 큰 터치 타깃
+   운전석에서 팔을 뻗어 누르므로 버튼은 최소 64px, 글자는 크게.
+   ═══════════════════════════════════════════════════════════════ */
+.car {
+  min-height: 100vh; display: flex; flex-direction: column;
+  background: radial-gradient(ellipse at top, #141b26 0%, var(--bg) 60%);
+}
+.car-head {
+  display: flex; align-items: center; gap: 20px;
+  padding: 22px 32px 14px; border-bottom: 1px solid var(--line);
+}
+.car-brand { font-size: 13px; letter-spacing: .3em; color: var(--muted); font-weight: 700; }
+.car-plate, .car-plate-edit {
+  font: inherit; font-size: 20px; font-weight: 700; letter-spacing: .04em;
+  padding: 6px 14px; border-radius: 8px; border: 1px solid var(--line);
+  background: var(--panel); color: var(--fg); cursor: pointer;
+}
+.car-plate-edit { width: 150px; }
+.car-head .src { margin-left: auto; font-size: 12px; }
+
+.car-body {
+  flex: 1; display: grid; grid-template-columns: 1.15fr 1fr; gap: 24px;
+  padding: 24px 32px 32px; min-height: 0;
+}
+@media (max-width: 900px) { .car-body { grid-template-columns: 1fr; } }
+.car-map {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+  padding: 8px; display: flex; align-items: center;
+}
+.car-map .map { max-height: calc(100vh - 160px); }
+.car-panel {
+  display: flex; flex-direction: column; justify-content: center; gap: 14px;
+  padding: 32px 36px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 16px;
+}
+.car-eyebrow { margin: 0; font-size: 14px; letter-spacing: .12em; color: var(--accent); font-weight: 700; }
+.car-title { margin: 0; font-size: 36px; line-height: 1.2; font-weight: 700; }
+.car-sub { margin: 0; font-size: 18px; color: var(--muted); }
+.car-sub b { color: var(--fg); font-size: 22px; }
+.car-note { margin: 4px 0 0; font-size: 14px; color: var(--muted); }
+.car-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 12px; }
+.car-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 84px; padding: 16px 20px; border-radius: 14px;
+  font: inherit; font-size: 20px; font-weight: 700; cursor: pointer;
+  background: #1c2128; color: var(--fg); border: 1px solid var(--line);
+  transition: transform .08s, filter .12s;
+}
+.car-btn small { font-size: 13px; font-weight: 500; color: var(--muted); }
+.car-btn.primary { background: var(--accent); color: #06121f; border-color: var(--accent); }
+.car-btn.primary small { color: #06121f; opacity: .7; }
+.car-btn:active:not(:disabled) { transform: scale(.98); }
+.car-btn:hover:not(:disabled) { filter: brightness(1.08); }
+.car-btn:disabled { opacity: .4; cursor: not-allowed; }
+.car-panel .err { font-size: 15px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   사용자 앱 — 세로 모바일. 데스크톱에서 열면 폰 폭으로 가운데 정렬.
+   ═══════════════════════════════════════════════════════════════ */
+.phone {
+  max-width: 430px; min-height: 100vh; margin: 0 auto;
+  display: flex; flex-direction: column;
+  background: var(--bg); border-left: 1px solid var(--line); border-right: 1px solid var(--line);
+}
+.phone-head {
+  display: flex; align-items: flex-end; justify-content: space-between;
+  padding: 52px 20px 14px;
+}
+.phone-eyebrow { margin: 0 0 4px; font-size: 12px; color: var(--muted); letter-spacing: .08em; }
+.phone-plate {
+  font: inherit; font-size: 24px; font-weight: 700; letter-spacing: .04em;
+  background: none; border: 0; border-bottom: 1px dashed var(--line); color: var(--fg);
+  padding: 0 0 2px; width: 150px;
+}
+.phone-plate:focus { outline: none; border-bottom-color: var(--accent); }
+.phone-status {
+  display: flex; align-items: center; gap: 12px; margin: 0 16px;
+  padding: 14px 16px; background: var(--panel);
+  border: 1px solid var(--line); border-radius: 12px;
+}
+.phone-status b { font-size: 15px; }
+.phone-status p { margin: 2px 0 0; font-size: 13px; color: var(--muted); }
+.phone-status .link { margin-left: auto; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.dot.idle { background: var(--muted); }
+.dot.ok { background: var(--free); }
+.dot.pulse { background: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); }
+  50% { box-shadow: 0 0 0 7px transparent; }
+}
+.phone-map { flex: 1; padding: 14px 16px; }
+.phone-map .map { max-height: 52vh; }
+.phone .err { margin: 0 16px; }
+.phone-actions {
+  position: sticky; bottom: 0; padding: 12px 16px 24px;
+  background: linear-gradient(transparent, var(--bg) 30%);
+}
+.phone-btn {
+  width: 100%; min-height: 56px; border-radius: 14px;
+  font: inherit; font-size: 17px; font-weight: 700; cursor: pointer;
+  background: #1c2128; color: var(--fg); border: 1px solid var(--line);
+}
+.phone-btn.primary { background: var(--accent); color: #06121f; border-color: var(--accent); }
+.phone-btn:disabled { opacity: .4; cursor: not-allowed; }

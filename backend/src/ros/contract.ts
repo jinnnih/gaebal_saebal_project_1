@@ -123,4 +123,6 @@ export interface ValetRequestMsg {
   kind: 'PARK' | 'RETRIEVE';
   vehicle_tag: string;
   spot_id: string | null;
+  /** 사람이 타고 있는 채로 주차하는가(동승 모드). 로봇이 속도 프로파일을 낮출 수 있다. */
+  has_occupant: boolean;
 }

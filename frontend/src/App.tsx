@@ -1,51 +1,30 @@
-import { useState } from 'react';
-import { useValetState } from './hooks/useValetState.ts';
-import { useRobotPose } from './hooks/useRobotPose.ts';
-import { cancelRequest, createRequest } from './api/client.ts';
-import { Header } from './components/Header.tsx';
-import { ParkingMap } from './components/ParkingMap.tsx';
-import { SidePanel } from './components/SidePanel.tsx';
-import { RequestQueue } from './components/RequestQueue.tsx';
+import { BrowserRouter, NavLink, Route, Routes } from 'react-router-dom';
+import ConsoleView from './views/ConsoleView.tsx';
+import AppView from './views/AppView.tsx';
+import CarView from './views/CarView.tsx';
 
+/**
+ * 같은 발렛파킹 기능을 세 창구로 노출한다.
+ *
+ *   /       관제 콘솔 — 주차장 운영자. 전체 현황·큐·지표
+ *   /app    사용자 앱 — 운전자 폰. 차 밖에서 요청·호출
+ *   /car    차 안 화면 — 하차 전 인수인계, 복귀 안내
+ *
+ * 자동화 수준은 셋 다 같다(무개입 AVP). 조작 창구만 다르다.
+ */
 export default function App() {
-  const { layout, states, requests, metrics, lotVersion, source, error, refresh } = useValetState();
-  const [selected, setSelected] = useState<string | null>(null);
-  // 더미 모드에서는 로봇 위치를 받을 곳이 없다
-  const pose = useRobotPose(source === 'live');
-
-  if (error) return <div className="fatal">레이아웃을 불러오지 못했습니다: {error}</div>;
-  if (!layout || !metrics) return <div className="loading">불러오는 중…</div>;
-
-  const onCreate = async (tag: string, kind: 'PARK' | 'RETRIEVE', spotId?: string | null) => {
-    await createRequest(tag, kind, spotId);
-    await refresh();
-  };
-  const onCancel = async (id: number) => {
-    await cancelRequest(id);
-    await refresh();
-  };
-
   return (
-    <>
-      <Header layout={layout} states={states} source={source} />
-
-      <main>
-        <div className="card">
-          <ParkingMap layout={layout} states={states} pose={pose}
-                      selected={selected} onSelect={setSelected} />
-        </div>
-
-        <div className="col">
-          <div className="card">
-            <RequestQueue requests={requests} readOnly={source === 'dummy'}
-                          onCreate={onCreate} onCancel={onCancel} onHover={setSelected} />
-          </div>
-          <div className="card">
-            <SidePanel layout={layout} states={states} metrics={metrics}
-                       lotVersion={lotVersion} selected={null} />
-          </div>
-        </div>
-      </main>
-    </>
+    <BrowserRouter>
+      <nav className="surface-switch">
+        <NavLink to="/" end>관제</NavLink>
+        <NavLink to="/app">사용자 앱</NavLink>
+        <NavLink to="/car">차 안</NavLink>
+      </nav>
+      <Routes>
+        <Route path="/" element={<ConsoleView />} />
+        <Route path="/app" element={<AppView />} />
+        <Route path="/car" element={<CarView />} />
+      </Routes>
+    </BrowserRouter>
   );
 }

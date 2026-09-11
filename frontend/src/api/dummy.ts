@@ -41,7 +41,8 @@ export function dummyRequests(layout: Layout): RequestRow[] {
     const at = new Date(Date.now() - (8 - i) * 6 * 60_000);
     rows.push({
       id: i + 1, kind: 'PARK', status: ok ? 'PARKED' : 'FAILED',
-      vehicle_tag: TAGS[i], assigned_spot_id: free[i * 2],
+      vehicle_tag: TAGS[i], source: 'CONSOLE', has_occupant: 0,
+      assigned_spot_id: free[i * 2],
       requested_at: at.toISOString(),
       finished_at: new Date(at.getTime() + dur * 1000).toISOString(),
       event_count: 7, last_seq: 7,
@@ -54,6 +55,7 @@ export function dummyRequests(layout: Layout): RequestRow[] {
   // 진행 중 2건 — 큐 UI 가 비지 않도록
   rows.push({
     id: 7, kind: 'PARK', status: 'PARKING', vehicle_tag: TAGS[6],
+    source: 'APP', has_occupant: 0,
     assigned_spot_id: free[3], requested_at: new Date(Date.now() - 95_000).toISOString(),
     finished_at: null, event_count: 6, last_seq: 6,
     duration_sec: null, position_err_m: null, heading_err_deg: null,
@@ -61,6 +63,7 @@ export function dummyRequests(layout: Layout): RequestRow[] {
   });
   rows.push({
     id: 8, kind: 'PARK', status: 'NAVIGATING', vehicle_tag: TAGS[7],
+    source: 'IN_CAR', has_occupant: 1,
     assigned_spot_id: free[11], requested_at: new Date(Date.now() - 32_000).toISOString(),
     finished_at: null, event_count: 4, last_seq: 4,
     duration_sec: null, position_err_m: null, heading_err_deg: null,

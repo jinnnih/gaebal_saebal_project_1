@@ -69,9 +69,13 @@ ros/
 
 ### 관제 대시보드 (`hj` 담당)
 
+같은 발렛 기능을 세 창구로 노출한다 — `/` 관제 콘솔, `/app` 사용자 앱, `/car` 차 안 화면.
+자동화 수준은 셋 다 무개입(AVP)이고 조작 창구만 다르다. 발렛 모드(하차 후)와
+동승 모드(탄 채로)를 요청 시 구분해 로봇에 `has_occupant` 로 전달한다.
+
 ```
-frontend/            React 19 + Vite 7
-└── src/  api/  hooks/  components/  types/  styles/
+frontend/            React 19 + Vite 7 + react-router
+└── src/  views/  api/  hooks/  components/  types/  styles/
 backend/             Express 5 + mysql2
 ├── src/  routes/  ros/  middleware/
 └── tools/           rosbridge 목 서버 · 문서 스냅샷 생성기

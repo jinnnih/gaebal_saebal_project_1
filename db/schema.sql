@@ -61,6 +61,10 @@ CREATE TABLE valet_request (
                         'UNPARKING','COMPLETED','FAILED','CANCELLED')
                    NOT NULL DEFAULT 'PENDING',
   vehicle_tag      VARCHAR(32)     NOT NULL COMMENT '데모용 차량 식별자',
+  -- 어느 창구에서 들어온 요청인가. 같은 기능을 세 화면에서 노출한다.
+  source           ENUM('IN_CAR','APP','CONSOLE') NOT NULL DEFAULT 'CONSOLE',
+  -- 사람이 타고 있는 채로 자동 주차(동승 모드)인지. 발렛은 하차 후이므로 0.
+  has_occupant     BOOLEAN         NOT NULL DEFAULT 0,
   lot_version_id   INT UNSIGNED    NULL,
   assigned_spot_id VARCHAR(8)      NULL,
   requested_at     DATETIME(3)     NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
@@ -145,7 +149,8 @@ WHERE s.lot_version_id = (SELECT MAX(id) FROM lot_version);
 
 -- 요청별 타임라인 요약. 큐 UI 와 지표 화면이 같이 쓴다.
 CREATE OR REPLACE VIEW v_request_timeline AS
-SELECT r.id, r.kind, r.status, r.vehicle_tag, r.assigned_spot_id,
+SELECT r.id, r.kind, r.status, r.vehicle_tag, r.source, r.has_occupant,
+       r.assigned_spot_id,
        r.requested_at, r.finished_at,
        COUNT(e.id)  AS event_count,
        MAX(e.seq)   AS last_seq,

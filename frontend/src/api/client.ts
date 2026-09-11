@@ -56,12 +56,20 @@ export async function fetchState(layout: Layout): Promise<{
 }
 
 export async function createRequest(
-  vehicleTag: string, kind: 'PARK' | 'RETRIEVE', spotId?: string | null,
+  vehicleTag: string,
+  kind: 'PARK' | 'RETRIEVE',
+  spotId?: string | null,
+  /** 어느 창구에서 눌렀는지. 같은 기능을 세 화면이 공유한다. */
+  source: 'IN_CAR' | 'APP' | 'CONSOLE' = 'CONSOLE',
+  hasOccupant = false,
 ) {
   const res = await fetch('/api/requests', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ vehicle_tag: vehicleTag, kind, spot_id: spotId ?? null }),
+    body: JSON.stringify({
+      vehicle_tag: vehicleTag, kind, spot_id: spotId ?? null,
+      source, has_occupant: hasOccupant,
+    }),
   });
   if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? '요청 실패');
   return res.json();

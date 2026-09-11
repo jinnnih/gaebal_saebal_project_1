@@ -10,16 +10,33 @@ npm run dev:web      # http://localhost:5173
 
 ## 구조
 
+같은 발렛 기능을 세 창구로 노출한다. 자동화 수준은 셋 다 같고(무개입 AVP) 조작 창구만 다르다.
+
+| 경로 | 화면 | 쓰는 사람 |
+|---|---|---|
+| `/` | 관제 콘솔 | 주차장 운영자 — 전체 현황·큐·지표 |
+| `/app` | 사용자 앱 | 운전자 폰 — 차 밖에서 요청·호출 |
+| `/car` | 차 안 화면 | 운전자 — 하차 전 인수인계, 복귀 안내 |
+
+`/car` 와 `/app` 은 차량 한 대의 시점이라 "내 차" 가 필요하다. 데모에서는 브라우저에
+저장한 차량번호를 쓴다(`useMyVehicle`). 실제 제품이면 VIN 이나 로그인 계정에서 온다.
+
 ```
 src/
 ├── main.tsx              진입점
-├── App.tsx               레이아웃 조립만
+├── App.tsx               라우터 — 세 화면을 경로로 나눈다
+├── views/
+│   ├── ConsoleView.tsx   관제 콘솔
+│   ├── AppView.tsx       사용자 앱 (세로 모바일)
+│   └── CarView.tsx       차 안 화면 (가로 와이드, 큰 터치 타깃)
 ├── types/index.ts        API·레이아웃 타입
 ├── api/
 │   ├── client.ts         fetch 래퍼. 백엔드가 없으면 더미로 대체
 │   └── dummy.ts          더미 상태·요청·지표 생성
 ├── hooks/
-│   └── useValetState.ts  전체 상태 + 폴링. 나중에 WebSocket 으로 교체할 지점
+│   ├── useValetState.ts  전체 상태 + 폴링. 나중에 WebSocket 으로 교체할 지점
+│   ├── useRobotPose.ts   로봇 위치만 400ms 로 따로
+│   └── useMyVehicle.ts   차 안·앱 화면의 "내 차" 
 ├── components/
 │   ├── Header.tsx        주차장 이름·공차·점유율·데이터 출처 배지
 │   ├── ParkingMap.tsx    주차장 평면도 (SVG)

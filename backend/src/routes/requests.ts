@@ -14,10 +14,15 @@ requestRoutes.get('/requests', wrap(async (req, res) => {
 }));
 
 requestRoutes.post('/requests', wrap(async (req, res) => {
-  const { kind = 'PARK', vehicle_tag, spot_id = null } = req.body ?? {};
+  const {
+    kind = 'PARK', vehicle_tag, spot_id = null,
+    source = 'CONSOLE', has_occupant = false,
+  } = req.body ?? {};
   if (!vehicle_tag) return res.status(400).json({ error: 'vehicle_tag 는 필수입니다' });
   if (!['PARK', 'RETRIEVE'].includes(kind))
     return res.status(400).json({ error: 'kind 는 PARK 또는 RETRIEVE 여야 합니다' });
+  if (!['IN_CAR', 'APP', 'CONSOLE'].includes(source))
+    return res.status(400).json({ error: 'source 는 IN_CAR / APP / CONSOLE 중 하나입니다' });
 
   const version = await currentLotVersion();
   if (!version) return res.status(503).json({ error: '레이아웃 미적재 — db/seed.ts 실행' });
@@ -48,18 +53,24 @@ requestRoutes.post('/requests', wrap(async (req, res) => {
   try {
     await conn.beginTransaction();
     const [r] = await conn.execute<any>(
-      `INSERT INTO valet_request (kind, vehicle_tag, lot_version_id, assigned_spot_id)
-       VALUES (?, ?, ?, ?)`, [kind, vehicle_tag, version.id, target]);
+      `INSERT INTO valet_request
+         (kind, vehicle_tag, lot_version_id, assigned_spot_id, source, has_occupant)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [kind, vehicle_tag, version.id, target, source, has_occupant ? 1 : 0]);
     const id = r.insertId;
     await conn.execute(
       `INSERT INTO mission_event (request_id, seq, event, payload)
        VALUES (?, 1, 'REQUEST_ACCEPTED', ?)`,
-      [id, JSON.stringify({ vehicle_tag, kind, spot_id: target })]);
+      [id, JSON.stringify({ vehicle_tag, kind, spot_id: target, source, has_occupant })]);
     await conn.commit();
 
     // rosbridge 가 없으면 DB 에만 남기고 published:false 로 알린다.
-    const published = publishRequest({ request_id: id, kind, vehicle_tag, spot_id: target });
-    res.status(201).json({ id, kind, vehicle_tag, spot_id: target, status: 'PENDING', published });
+    // has_occupant 는 로봇이 주행 프로파일을 낮출지 판단하라고 같이 보낸다.
+    const published = publishRequest({
+      request_id: id, kind, vehicle_tag, spot_id: target, has_occupant: !!has_occupant });
+    res.status(201).json({
+      id, kind, vehicle_tag, spot_id: target, source,
+      has_occupant: !!has_occupant, status: 'PENDING', published });
   } catch (e) {
     await conn.rollback();
     throw e;

@@ -45,6 +45,8 @@ export interface RequestRow {
   kind: RequestKind;
   status: RequestStatus;
   vehicle_tag: string;
+  source: 'IN_CAR' | 'APP' | 'CONSOLE';
+  has_occupant: number;
   assigned_spot_id: string | null;
   requested_at: string;
   finished_at: string | null;
